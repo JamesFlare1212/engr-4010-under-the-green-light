@@ -34,3 +34,10 @@ Co-GM评价表：<https://surveys.rpi.edu/jfe/form/SV_4UXvqLDBSGMnl9s>。课件�
 本仓库没有统一授予所有材料开源许可。课程附件、NSPE文件和同学作品保留原有权利归属；创建本地Git仓库不等于获得公开再分发许可。后续公开应用时需明确选择内容和许可证。
 
 流程图内嵌了Noto Sans SC中文字体子集，其SIL Open Font License文本保存在HTML注释和同目录的 `Flowchart Font License.txt`。字体来源：Google Fonts的Noto Sans SC项目。
+
+## 网页应用新增资源（2026-10-21）
+
+- 网页双语改编：`shared/content.ts`，GM 私密提示：`server/private-content.ts`；依据原 GM / 玩家草案与开发种子，作为单独的 1.0.0 应用版本。
+- 海岸示意图：`src/components/Seascape.svelte`，为本应用绘制的 SVG，不包含参考材料的图片或原流程图代码。
+- 图标：Lucide，ISC 许可证。
+- 自托管中文字体：`@fontsource-variable/noto-sans-sc`（Noto Sans SC），SIL Open Font License 1.1；公开许可证为 `public/licenses/Noto-Sans-SC-OFL.txt`。与原流程图内嵌字体分别管理。

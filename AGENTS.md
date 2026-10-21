@@ -1,6 +1,6 @@
 # Developer handoff
 
-This repository currently contains project preparation, not an implemented web app.
+仓库现已包含 Bun / Svelte / SQLite 联机应用；运行、验证与部署从 README 开始。原课程材料、Word 草案与开发种子保持来源版本，应用改编和私密内容分别放在 shared/ 与 server/。
 
 ## Read first
 

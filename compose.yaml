@@ -1,0 +1,24 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_PATH: /data/green-light.sqlite
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
+    volumes:
+      - green-light-data:/data
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    read_only: true
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 10s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  green-light-data:

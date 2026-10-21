@@ -1,65 +1,93 @@
-# ENGR 4010 · Under the Green Light
+# 绿灯之下 / Under the Green Light
 
-《绿灯之下》的网页版项目准备仓库。背景来自 ENGR 4010 Lead RPG、Guardians Guild 和 Heliora Prime；当前已整理资料、剧本及玩法数据，供后续开发使用。
+支持多设备联机的 Guardians 协作救援剧本应用。采用 **Bun、Svelte 5、Vite、TypeScript、SQLite、Tailwind CSS**，可用 Docker Compose 自托管。
 
-**当前阶段：开发交接准备完成，尚未建立 Web 应用。** 没有选定前端框架、部署平台或后端。已有 HTML 文件是可离线打开的交互流程图。
+十二名维修人员被困在 The Shell 外围的潮汐泵站。海水已经涌入，屏幕却仍亮着绿色安全信号。团队需要调查证据、协调公会、选择路线，并完成通路、人员与隔离三个目标。
 
-## 从哪里开始
+## 本地运行
 
-1. 阅读 [项目说明](docs/PROJECT_BRIEF.md)，了解要开发什么和首版范围。
-2. 阅读 [世界与课程背景](docs/WORLD_AND_COURSE.md)，区分既有设定与原创情节。
-3. 阅读 [开发交接](docs/DEVELOPMENT_HANDOFF.md)，掌握状态、规则边界和验收场景。
-4. 查看 [结构化场景数据](content/scenario.zh-CN.json) 和 [材料来源](docs/SOURCES.md)。
+使用 Bun 1.4.2，依赖由 `bun.lock` 固定。
 
-## 故事
-
-The Shell 的外围潮汐泵站正在进水，控制台仍显示绿色安全状态。十二名维修人员被困，下一轮暴潮即将抵达。Guardians 需要调查旧测试数据、协调三位利益不同的 NPC，并选择救援路线。
-
-三条示例路线是崖壁吊运、海上转运、外部泄洪；玩家也能自创方案。每条路线都要完成三个执行目标：建立通路、转移人员、隔离危险。结果分别影响人员、设施和信任。
-
-## 材料导航
-
-- [GM 剧本](materials/scenario/draft-v1/Under%20the%20Green%20Light%20-%20GM%20Script.docx)：中文主持说明、英文台词、分档后果、复盘和简版。
-- [英文玩家包](materials/scenario/draft-v1/Under%20the%20Green%20Light%20-%20Player%20Pack.docx)：任务、证据、角色提示、事故报告。
-- [交互流程图](materials/scenario/draft-v1/Under%20the%20Green%20Light%20-%20Flowchart.html)：浏览器直接打开；内嵌中文字体，可离线使用。
-- [剧本文本](materials/text/scenario/gm-script.txt)、[玩家包文本](materials/text/scenario/player-pack.txt)：便于检索和开发工具读取。
-- [课程与组内材料索引](materials/catalog.json)：原件、文本对应关系、材料性质及原件 SHA-256。
-
-## 目录
-
-```text
-content/                     结构化场景数据，供后续应用导入
-docs/                        产品说明、背景、开发交接、决定及来源
-materials/
-  course/originals/          课程 syllabus、规则、NSPE 指定读物、第6周课件
-  guild/originals/           公会总部、使命、前次游戏及讨论材料
-  scenario/draft-v1/         本次原创剧本、玩家包、流程图与字体许可证
-  text/                     从原件提取的可搜索文本
-  catalog.json              材料目录与校验值
-tools/                       材料提取与 Word 文档再生成工具
+```bash
+bun install --frozen-lockfile
+bun run dev
 ```
 
-## 维护材料
+打开 Vite 输出的地址，默认 `http://localhost:5173`。开发脚本同时启动 Bun（3000）与 Vite（5173；占用时会选择下一个端口）。手机使用电脑的局域网 IP，两台设备需在同一网络，相应端口可访问。
 
-这两项工具只用于文档，不是 Web 应用依赖：
+更新 Vite 代理配置后重启 `bun run dev`。若旧服务提示“请求来源与房间地址不一致”，无需删除房间或数据库；重启后刷新页面即可。
+
+生产模式由一个 Bun 进程提供静态资源、HTTP API 与 WebSocket：
+
+```bash
+bun run build
+bun start
+```
+
+## Docker Compose
+
+```bash
+docker compose up -d --build
+```
+
+访问 `http://localhost:3000`。SQLite 保存在命名卷 `green-light-data`。可选将 `.env.example` 复制为 `.env`，设置 `APP_PORT` 和反向代理后的 `PUBLIC_ORIGIN`。HTTPS、备份、升级与单实例约束见 [部署说明](docs/DEPLOYMENT.md)。
+
+## 如何游玩
+
+1. 创建房间，选择完整 / 精简剧本、1–4 个 GM 席位与实体 / 虚拟骰。两个席位即 Co-GM。
+2. 分享四位房间码、链接或二维码。房主分配 GM、玩家和观察者；成员自行选择角色分工。
+3. GM 开始任务。系统同步背景、证据、NPC 消息和任务提示，支持按需朗读。完整版有三次准备检定，精简版跳过准备骰。
+4. 协商、路线和补救使用预设投票，由 GM 手动结束并公开计票。结束前隐藏选择，玩家可随时改票，全员投完也不会自动关闭。平票由 GM 说明理由并裁决。
+5. GM 公布预设或自定义行动、备用方案、依据与 DC。玩家选择申请 / 协助；系统从申请者中随机选一人。虚拟版仅这位玩家可掷骰；实体版由 GM 录入 1–20。
+6. 系统结算五档后果；执行失败且还有物资时自动发起补救投票。每次最多提升一档，两份物资不会因重试重复扣除。三个目标顺序可调整。
+7. 保存实际通报、具名负责人和更新时间，进入共同复盘。支持交接文本、GM 完整 JSON 存档导出，以及从存档建立新房间。
+
+中英文逐设备切换，通过同一组 ID 同步。自定义方案、笔记、通报和反思保留输入原文。玩家不会收到主持私密上下文与笔记。课堂计时与故事的十二分钟分别处理。
+
+## 同步与恢复
+
+SQLite 是权威存档；WebSocket 推送按成员权限裁剪的完整快照。浏览器保存自己的凭证与最后快照，刷新或重连恢复原身份。断线保留阅读并暂停写入；恢复后获取服务器状态。已实现心跳、退避重连、前台唤醒同步、HTTP 快照补取和多标签页在线统计。
+
+写命令有独立 ID，数据库事务同时保存进度和去重记录。GM 操作检查版本，冲突返回最新状态；玩家投票和申请绑定具体 ID，可并发提交。详见 [实现与协议](docs/ARCHITECTURE.md)。
+
+## 检查
+
+```bash
+bun run check
+bun test tests
+bun run build
+# 或执行以上全部
+bun run verify
+```
+
+测试覆盖规则、资源幂等、权限、投票保密、SQLite 重启、HTTP 完整游玩与真实 WebSocket 断开重连。[验证记录](docs/QA.md) 区分自动测试、浏览器检查和未执行的环境检查。
+
+## 目录与材料
+
+```text
+src/                         Svelte 界面、语言切换、浏览器同步
+shared/                      公共双语剧本、协议类型、结果展示
+server/                      Bun 服务、状态机、SQLite、GM 私密上下文
+tests/                       规则、存档、权限、协议与联机测试
+public/                      精选公开资源与字体许可证
+content/scenario.zh-CN.json   原开发种子，保持原草案边界
+docs/                        世界背景、规则交接、实现与部署说明
+materials/                   参考原件与原剧本草案，不进入运行镜像或公开资源
+tools/                       文档工具与开发启动脚本
+```
+
+网页双语改编为 `shared/content.ts` 的 1.0.0 版本；原 Word、玩家包、流程图和开发种子保持原样。改编映射见 [决定记录](docs/DECISIONS.md)。
+
+参考 [项目说明](docs/PROJECT_BRIEF.md)、[世界与课程](docs/WORLD_AND_COURSE.md)、[开发交接](docs/DEVELOPMENT_HANDOFF.md)、[来源与使用范围](docs/SOURCES.md)。课程规则、世界既有设定、本剧本虚构事实与场次约定分别记录；游戏不会生成伦理总分或课程成绩。
+
+文档维护仍使用 `requirements-docs.txt`：
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-docs.txt
 python tools/extract_materials.py
-```
-
-重新生成 Word 草案时，先指定单独的输出目录，避免覆盖人工修订：
-
-```bash
 python tools/build_documents.py --output /tmp/under-the-green-light-docs
 ```
 
-`materials/catalog.json` 校验的是已收录的原件。若有意更新原件，需同步更新目录中的校验值、来源说明及结构化数据；具体规则见 [开发交接](docs/DEVELOPMENT_HANDOFF.md)。
-
-## 使用范围
-
-课程原件、公会作品、原创改编和字体有不同的权利归属，见 [来源与使用说明](docs/SOURCES.md)。课程材料作为本地开发参考保留，发布网页版时应挑选适合公开的内容。课纲第5页要求课程作业使用 AI 事先获得教师许可；剧本标注为 AI 辅助准备草案。
-
-Git 已初始化为 `main` 分支；尚未配置远程仓库。
+`build_documents.py` 再现原作者草案，不会读回后续人工 Word 修改；默认生成到临时目录。

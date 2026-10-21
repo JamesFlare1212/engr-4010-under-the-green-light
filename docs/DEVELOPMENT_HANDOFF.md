@@ -1,5 +1,9 @@
 # 开发交接：规则、状态与验收
 
+## 已实施交接（2026-10-21）
+
+现已建立联机应用。状态机在 `server/engine.ts`，SQLite 与权限投影在 `server/store.ts`，HTTP / WebSocket 在 `server/index.ts`，双语剧本改编在 `shared/content.ts`（1.0.0）。本文原规则和验收行为继续约束实现；原 JSON、Word 与独立流程图保留草案版本。运行、部署和已执行验证见 [README](../README.md)、[实现与协议](ARCHITECTURE.md)、[验证记录](QA.md)。
+
 ## 先理解现有文件
 
 当前是材料仓库。`content/scenario.zh-CN.json` 提供稳定ID、路线、DC、NPC、后果和时长；GM剧本保留更完整的叙述与主持提示；玩家包可作为玩家界面的内容依据。流程图HTML用于理解交互分支，其字体和绘图代码属于展示参考。
@@ -83,7 +87,7 @@ delta = total - effectiveDC
 10. 存档往返后保留规则版本、行动ID、原档/有效档、资源和报告；对不支持的版本显示可理解的错误。
 11. 玩家展示视图隐藏GM真相；键盘可操作，结果状态有文字说明。
 
-这些是未来应用应验证的行为。当前材料仓库尚未建立应用测试或运行命令。
+这些行为由规则、存档与联机测试覆盖。运行 `bun run check`、`bun test tests` 和 `bun run build`，或执行 `bun run verify`。人工浏览器与环境验证边界记录在 `docs/QA.md`。
 
 ## 文档与来源维护
 
