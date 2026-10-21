@@ -1,16 +1,17 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Languages, X, AlertCircle } from 'lucide-svelte';
-  import { locale } from './lib/i18n';
+  import { locale, syncBrowserLocale } from './lib/i18n';
   import { room, session, notice, resume, disconnect } from './lib/client';
   import Brand from './components/Brand.svelte';
   import Home from './components/Home.svelte';
   import Room from './components/Room.svelte';
   let joinCode = $state(/^\/room\/(\d{4})/.exec(location.pathname)?.[1] ?? '');
   onMount(() => {
+    const stopLocaleSync = syncBrowserLocale();
     const route = () => { const code = /^\/room\/(\d{4})/.exec(location.pathname)?.[1]; if (code) { joinCode = code; resume(code); } else { disconnect(); room.set(null); session.set(null); joinCode = ''; } };
     route(); window.addEventListener('popstate', route);
-    return () => { window.removeEventListener('popstate', route); disconnect(); };
+    return () => { stopLocaleSync(); window.removeEventListener('popstate', route); disconnect(); };
   });
 </script>
 <a href="#main" class="skip-link">{$locale === 'zh-CN' ? '跳到主要内容' : 'Skip to content'}</a>

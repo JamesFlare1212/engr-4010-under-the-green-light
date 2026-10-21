@@ -39,8 +39,8 @@ export function createApp(options: { db?: string; port?: number; hostname?: stri
     try {
       const parsed = new URL(origin);
       if (['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password && parsed.pathname === '/' && !parsed.search && !parsed.hash) originHost = parsed.host;
-    } catch { /* 无效的 Origin 与其他不匹配来源统一返回 403。 */ }
-    // 代理保留 Host 即可校验，无需依赖局域网 HTTP 不提供的 Sec-Fetch-Site。
+    } catch { /* Invalid origins return 403, just like other mismatched origins. */ }
+    // Preserving Host through the proxy enables validation without Sec-Fetch-Site, which LAN HTTP may omit.
     requireThat(originHost && (originHost === new URL(req.url).host || origin === process.env.PUBLIC_ORIGIN), '请求来源与房间地址不一致。', 'The request origin does not match this room address.', 'origin', 403);
   }
   const server = Bun.serve<SocketData>({

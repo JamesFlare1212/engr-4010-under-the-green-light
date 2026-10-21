@@ -1,4 +1,4 @@
-// randomUUID 只在安全上下文可用；局域网 HTTP 仍使用 Web Crypto 生成 UUID v4。
+// randomUUID requires a secure context; LAN HTTP still uses Web Crypto to generate UUID v4.
 export function uuid(source: Pick<Crypto, 'getRandomValues'> & Partial<Pick<Crypto, 'randomUUID'>> = crypto): string {
   if (source.randomUUID) return source.randomUUID();
   const bytes = source.getRandomValues(new Uint8Array(16));

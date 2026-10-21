@@ -17,12 +17,12 @@ function fixture(path = ':memory:') {
   send(host, 'role', { memberId: second.memberId, role: 'gm' });
   return { store, host, second, player, send };
 }
-test('Co-GM 同时推进时只有一个命令成功，另一位获得版本冲突', () => {
+test('only one concurrent Co-GM advance succeeds while the other receives a revision conflict', () => {
   const f = fixture(); const revision = f.store.room(f.host.code).revision;
   f.send(f.host, 'next', {}, revision);
   expect(() => f.send(f.second, 'next', {}, revision)).toThrow(); expect(f.store.room(f.host.code).phase).toBe('briefing');
 });
-test('相同命令重试幂等：推进、掷骰、物资投票不会重复执行', () => {
+test('command retries are idempotent for advancement, rolls and kit votes', () => {
   const f = fixture(); const commandId = crypto.randomUUID(), revision = f.store.room(f.host.code).revision;
   const first = f.send(f.host, 'next', {}, revision, commandId); const retried = f.send(f.host, 'next', {}, revision, commandId);
   expect(retried.phase).toBe('briefing'); expect(retried.revision).toBe(first.revision);
@@ -37,18 +37,18 @@ test('相同命令重试幂等：推进、掷骰、物资投票不会重复执�
   f.send(f.host, 'close_vote', { pollId }, closeRevision, closeId); f.send(f.host, 'close_vote', { pollId }, closeRevision, closeId);
   expect(f.store.room(f.host.code).emergencyKits).toBe(1); expect(f.store.room(f.host.code).checks[0]!.result?.tier).toBe('near_miss');
 });
-test('玩家快照不泄漏主持上下文、私密笔记、他人票选或会话凭证', () => {
+test('player snapshots never expose GM context, private notes, other votes or session credentials', () => {
   const f = fixture(); const r = f.store.room(f.host.code); r.phase = 'route_choice'; r.gmNotes = 'SECRET GM NOTE'; f.store.save(r); const other = f.store.join(f.host.code, 'Other'); f.send(f.host, 'route_vote'); f.send(other, 'vote', { pollId: f.store.room(f.host.code).polls[0]!.id, option: 'high_line' });
   const room = f.store.room(f.host.code), view = f.store.view(room, f.player.memberId, []);
   const raw = JSON.stringify(view); expect(raw).not.toContain('SECRET'); expect(view.gmNotes).toBeUndefined(); expect(view.gmContext).toBeUndefined(); expect(view.polls[0]!.counts).toBeNull(); expect(view.polls[0]!.myVote).toBeNull(); expect('ballots' in view.polls[0]!).toBeFalse(); expect(raw).not.toContain(f.host.token);
   expect(f.store.view(room, f.host.memberId, []).gmNotes).toBe('SECRET GM NOTE');
 });
-test('玩家不能提升自身权限、推进剧本、读他人的房间凭证', () => {
+test('players cannot elevate their role, advance the story or read other room credentials', () => {
   const f = fixture(); expect(() => f.send(f.player, 'role', { memberId: f.player.memberId, role: 'gm' })).toThrow(); expect(() => f.send(f.player, 'next')).toThrow();
   const other = f.store.create('Other', { mode: 'short', gmCount: 1, dice: 'physical' }); expect(() => f.store.authenticate(other.code, f.host.token)).toThrow();
   const rows = f.store.db.query('SELECT token_hash FROM sessions').all() as { token_hash: string }[]; expect(rows.some(r => r.token_hash === f.host.token)).toBeFalse();
 });
-test('SQLite 重启后保留进度与登录；导入新房间不会继承旧令牌', () => {
+test('SQLite restarts preserve progress and sessions while imported rooms never inherit old tokens', () => {
   const dir = mkdtempSync(join(tmpdir(), 'green-light-test-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
   const path = join(dir, 'game.sqlite'); let store = new Store(path);
   const host = store.create('GM', { mode: 'short', gmCount: 1, dice: 'virtual' }); const player = store.join(host.code, 'P');
@@ -57,12 +57,12 @@ test('SQLite 重启后保留进度与登录；导入新房间不会继承旧令�
   expect(store.authenticate(host.code, host.token).room.phase).toBe('briefing'); expect(store.authenticate(host.code, player.token).member.id).toBe(player.memberId);
   const imported = store.restore(archive, 'Restored GM'); expect(imported.code).not.toBe(host.code); expect(store.room(imported.code).phase).toBe('briefing'); expect(() => store.authenticate(imported.code, host.token)).toThrow();
 });
-test('拒绝降级写入未来数据库版本', () => {
+test('reject writes to a newer database schema to prevent downgrades', () => {
   const dir = mkdtempSync(join(tmpdir(), 'green-light-version-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
   const path = join(dir, 'game.sqlite'); const store = new Store(path); store.db.exec('PRAGMA user_version=2'); store.db.close();
   expect(() => new Store(path)).toThrow('Database schema is newer');
 });
-test('所有成员都能生成交接草稿并保存未完成报告，私密权限保持独立', () => {
+test('all members can generate handover drafts and save incomplete reports while private permissions remain separate', () => {
   const f = fixture(); const observer = f.store.join(f.host.code, 'Observer');
   f.send(f.host, 'role', { memberId: observer.memberId, role: 'spectator' });
   const room = f.store.room(f.host.code); room.phase = 'ending'; room.gmNotes = 'GM ONLY'; f.store.save(room);
@@ -79,7 +79,7 @@ test('所有成员都能生成交接草稿并保存未完成报告，私密权�
   expect(() => f.send(observer, 'override_tracks', {})).toThrow();
 });
 
-test('交接多人编辑使用版本检查，过期草稿不能覆盖其他成员的新内容', () => {
+test('collaborative handover edits check revisions so stale drafts cannot overwrite newer content', () => {
   const f = fixture(); const other = f.store.join(f.host.code, 'Other player');
   const room = f.store.room(f.host.code); room.phase = 'ending'; f.store.save(room);
   const revision = room.revision;

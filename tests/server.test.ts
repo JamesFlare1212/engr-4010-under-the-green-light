@@ -38,7 +38,7 @@ function socket(base: string, session: Session) {
   cleanup.push(() => ws.close());
   return { ws, states, until };
 }
-test('真实 WebSocket：认证后发送投影，多标签页在线统计，断开重连不新增身份', async () => {
+test('real WebSocket: authenticated projections, presence across tabs and reconnection preserve identity', async () => {
   const f = fixture(), host = await f.create(), p = await f.join(host, 'Player');
   const gmSocket = socket(f.base, host), playerSocket = socket(f.base, p);
   const snapshot = await playerSocket.until(s => s.online.includes(p.memberId)); expect(snapshot.gmNotes).toBeUndefined(); expect(snapshot.members).toHaveLength(2);
@@ -49,7 +49,7 @@ test('真实 WebSocket：认证后发送投影，多标签页在线统计，断�
   secondTab.ws.close(); await gmSocket.until(s => s.phase === 'briefing' && !s.online.includes(p.memberId));
   const reconnected = socket(f.base, p); const restored = await reconnected.until(s => s.phase === 'briefing'); expect(restored.me).toBe(p.memberId); expect(restored.members).toHaveLength(2);
 });
-test('HTTP 同步：不同玩家可基于相同版本投票，GM 同步操作返回 409 和最新状态', async () => {
+test('HTTP sync: players can vote at the same revision while concurrent GM actions return 409 with the latest state', async () => {
   const f = fixture(), host = await f.create('short', 'physical', 2), gm2 = await f.join(host, 'Co-GM'), a = await f.join(host, 'A'), b = await f.join(host, 'B');
   await f.send(host, 'role', { memberId: gm2.memberId, role: 'gm' });
   const version = (await f.state(host)).revision;
@@ -71,7 +71,7 @@ test('HTTP 同步：不同玩家可基于相同版本投票，GM 同步操作返
   expect((await f.state(host)).polls.at(-1)!.counts).toMatchObject({ both: 0, verify: 2 });
   expect((await f.send(a, 'vote', { pollId: poll.id, option: 'both' })).status).toBe(400);
 });
-test('完整版 HTTP 全程：六人轮流主导、三次执行、自动补救投票、交接与复盘', async () => {
+test('full HTTP playthrough: six rotating leads, three execution checks, automatic remediation votes, handover and debrief', async () => {
   const f = fixture(), host = await f.create('full'), players: Session[] = [];
   for (let i = 0; i < 6; i++) players.push(await f.join(host, `Player ${i}`));
   async function send(type: string, payload: Record<string, unknown> = {}) { const result = await f.send(host, type, payload); expect(result.status).toBe(200); return result.data.state as RoomView; }
@@ -98,14 +98,14 @@ test('完整版 HTTP 全程：六人轮流主导、三次执行、自动补救�
   const save = await f.api(`/api/rooms/${host.code}/export`, undefined, host); expect(save.status).toBe(200); expect(save.data.room.phase).toBe('debrief');
   const restored = await f.api('/api/rooms/import', { name: 'Restored GM', save: save.data }); expect(restored.status).toBe(201); expect(restored.data.state.checks).toHaveLength(6); expect(restored.data.state.emergencyKits).toBe(1);
 });
-test('权限和输入：缺少登录、玩家导出、跨站请求、错误 JSON 都被拒绝', async () => {
+test('permissions and input: reject unauthenticated access, player exports, cross-origin requests and invalid JSON', async () => {
   const f = fixture(), host = await f.create(), p = await f.join(host, 'Player');
   expect((await f.api(`/api/rooms/${host.code}`)).status).toBe(401); expect((await f.api(`/api/rooms/${host.code}/export`, undefined, p)).status).toBe(403);
   const badOrigin = await fetch(`${f.base}/api/rooms`, { method: 'POST', headers: { Origin: 'https://unrelated.example' }, body: '{}' }); expect(badOrigin.status).toBe(403);
   const badJson = await fetch(`${f.base}/api/rooms`, { method: 'POST', body: '{oops' }); expect(badJson.status).toBe(400);
   const wrongCode = await f.api('/api/rooms/0000/join', { name: 'Visitor' }); expect(wrongCode.status).toBe(404);
 });
-test('来源校验不依赖 Fetch Metadata；伪造提示头及无效 Origin 仍返回 403', async () => {
+test('origin validation works without Fetch Metadata and rejects forged metadata and invalid origins with 403', async () => {
   const f = fixture();
   for (const origin of ['https://unrelated.example', 'null', 'not-a-url', 'file:///tmp']) {
     const response = await fetch(`${f.base}/api/rooms`, {
@@ -115,7 +115,7 @@ test('来源校验不依赖 Fetch Metadata；伪造提示头及无效 Origin 仍
     expect((await response.json()).error).toBe('origin');
   }
 });
-test('WebSocket 拒绝无效令牌，认证前不发送房间内容', async () => {
+test('WebSocket rejects invalid tokens and sends no room content before authentication', async () => {
   const f = fixture(), host = await f.create(); const messages: string[] = [];
   const ws = new WebSocket(f.base.replace('http', 'ws') + '/ws'); cleanup.push(() => ws.close());
   const closed = new Promise<number>((resolve, reject) => {
@@ -126,7 +126,7 @@ test('WebSocket 拒绝无效令牌，认证前不发送房间内容', async () =
   });
   expect(await closed).toBe(1008); expect(messages).toHaveLength(0);
 });
-test('生产资源：深层房间路由返回应用，私密源文件不可读，CSP 允许打包的字体', async () => {
+test('production assets: deep room links serve the app, private source files stay inaccessible and CSP allows bundled fonts', async () => {
   const directory = mkdtempSync(joinPath(tmpdir(), 'green-light-static-')); cleanup.push(() => rmSync(directory, { recursive: true, force: true }));
   const publicPath = joinPath(directory, 'web'); mkdirSync(publicPath); writeFileSync(joinPath(publicPath, 'index.html'), '<!doctype html><title>Public application</title>');
   writeFileSync(joinPath(directory, 'private.ts'), 'PRIVATE SOURCE');
@@ -137,7 +137,7 @@ test('生产资源：深层房间路由返回应用，私密源文件不可读�
   const source = await fetch(`${base}/server/private.ts`); expect(source.status).toBe(404); expect(await source.text()).not.toContain('PRIVATE SOURCE');
 });
 
-test('交接协作：玩家和观察者保存后实时同步给全组，未填完整仍可存草稿', async () => {
+test('collaborative handover: player and observer saves sync to everyone and incomplete drafts can be saved', async () => {
   const f = fixture(), host = await f.create(), player = await f.join(host, 'Player'), observer = await f.join(host, 'Observer');
   await f.send(host, 'role', { memberId: observer.memberId, role: 'spectator' });
   const room = f.app.store.room(host.code); room.phase = 'ending'; room.gmNotes = 'Private notes'; f.app.store.save(room);

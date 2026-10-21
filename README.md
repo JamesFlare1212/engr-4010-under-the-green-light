@@ -52,7 +52,9 @@ This mode does not update the app automatically. See the [deployment guide](docs
 6. The app resolves five outcome tiers. A failed execution check automatically opens a remediation ballot if supplies remain. Each check can improve by at most one tier, and retries do not consume either of the two emergency kits twice. The three objectives can be completed in a different order.
 7. All members, including players and observers, can edit the handover, generate a factual draft, and save unfinished work. Once the actual public statement, named owner, and next update time are complete, the GM opens the shared debrief. The app supports handover text export, full JSON archive export for GMs, and creating a new room from an archive.
 
-Each device can switch between English and Chinese while synchronizing through the same content IDs. Custom plans, notes, statements, and reflections retain their original input language. Players do not receive private GM context or notes. Classroom timing is tracked separately from the story's twelve-minute window.
+Appearance follows the browser's light or dark preference and updates immediately when it changes. Each device also follows its browser's preferred supported language (English or Chinese; otherwise English). Browser language changes update the interface immediately. The language button provides a temporary override until the next browser language change or page reload; older saved language choices no longer override the browser.
+
+Both languages synchronize through the same content IDs. Custom plans, notes, statements, and reflections retain their original input language. Players do not receive private GM context or notes. Classroom timing is tracked separately from the story's twelve-minute window.
 
 ## Synchronization and recovery
 

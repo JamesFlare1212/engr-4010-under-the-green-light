@@ -142,7 +142,7 @@ export function download(text: string, name: string, type: string) {
 }
 function copyWithSelection(text: string): boolean {
   const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  // showModal() 使弹窗外的控件无法聚焦；备用控件必须位于当前弹窗内。
+  // showModal() prevents controls outside the dialog from receiving focus; put the fallback control inside the active dialog.
   const container = previousFocus?.closest('dialog[open]') ?? document.querySelector('dialog[open]') ?? document.body;
   const field = document.createElement('textarea');
   field.value = text;
@@ -154,7 +154,7 @@ function copyWithSelection(text: string): boolean {
     field.focus({ preventScroll: true });
     field.select();
     field.setSelectionRange(0, text.length);
-    // execCommand 可能在未选中目标内容时仍返回 true，先验证选区。
+    // execCommand may return true without selecting the intended content; verify the selection first.
     if (document.activeElement !== field || field.selectionStart !== 0 || field.selectionEnd !== text.length) return false;
     return document.execCommand('copy');
   } finally {
@@ -168,14 +168,14 @@ export async function copy(text: string): Promise<boolean> {
       await navigator.clipboard.writeText(text);
       notice.set(bi('已复制到剪贴板。', 'Copied to clipboard.'));
       return true;
-    } catch { /* 权限受限时继续尝试选区复制。 */ }
+    } catch { /* Fall back to copying the selection when clipboard access is denied. */ }
   }
   try {
     if (copyWithSelection(text)) {
       notice.set(bi('已复制到剪贴板。', 'Copied to clipboard.'));
       return true;
     }
-  } catch { /* 由界面提供可选中的原文供手动复制。 */ }
+  } catch { /* The interface provides selectable text for manual copying. */ }
   notice.set(bi('无法访问剪贴板，请长按或选中文字复制。', 'Clipboard unavailable. Select the text and copy it manually.'));
   return false;
 }

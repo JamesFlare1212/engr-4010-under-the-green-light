@@ -1,5 +1,5 @@
 import { bi } from '../shared/types';
-// 仅服务端导入；玩家快照不包含这些主持提示。
+// Import only on the server; player snapshots never include these GM notes.
 export const gmContext = [
   { name: 'Mira', context: bi('批准过临时旁路，担心工程信誉。不要把她演成必须击败的反派；拒绝虚假签字仍可合作。', 'She approved the temporary bypass and fears losing trust. She is not an adversary to defeat; refusing a false sign-off does not stop her cooperation.') },
   { name: 'Tavi', context: bi('保留原始通报及修正。说真话不掷骰；是否隐瞒由实际发言决定。', 'Retain the original message and corrections. Truthful updates require no roll; concealment depends on what is actually said.') },

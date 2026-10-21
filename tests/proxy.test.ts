@@ -11,7 +11,7 @@ async function fixture() {
   const backend = createApp({ db: ':memory:', hostname: '127.0.0.1', port: 0 });
   cleanup.push(backend.stop);
   const target = `http://127.0.0.1:${backend.server.port}`;
-  // 使用项目的真实代理选项，仅替换临时后端端口；这样能检测字符串简写的默认 Host 重写。
+  // Use the actual project proxy options with only the temporary backend port changed to catch default Host rewriting in string shorthand.
   const proxy = Object.fromEntries(Object.entries(config.server!.proxy!).map(([path, options]) => [
     path, typeof options === 'string' ? target : { ...options, target: path === '/ws' ? target.replace('http:', 'ws:') : target }
   ]));
@@ -27,7 +27,7 @@ async function fixture() {
   async function post(origin: string, path: string, body: unknown, overrideOrigin = origin) {
     return fetch(`${base}${path}`, {
       method: 'POST',
-      // 局域网 HTTP / 部分浏览器不发送 Sec-Fetch-Site，不能依靠它绕过错误的 Host。
+      // LAN HTTP and some browsers omit Sec-Fetch-Site; it must not mask an incorrectly rewritten Host.
       headers: { Host: new URL(origin).host, Origin: overrideOrigin, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
@@ -35,7 +35,7 @@ async function fixture() {
   return { base, port: address.port, post };
 }
 
-test('真实 Vite 代理：无 Fetch Metadata 的 localhost / 局域网请求可创建及加入房间', async () => {
+test('real Vite proxy: localhost and LAN requests can create and join rooms without Fetch Metadata', async () => {
   const f = await fixture();
   for (const host of ['localhost', '127.0.0.1', '192.168.10.30', '[fd00::42]']) {
     const origin = `http://${host}:${f.port}`;
@@ -48,7 +48,7 @@ test('真实 Vite 代理：无 Fetch Metadata 的 localhost / 局域网请求可
   }
 });
 
-test('真实 Vite 代理：保留 Origin 后，非同源请求仍被拒绝', async () => {
+test('real Vite proxy: preserving Origin still rejects cross-origin requests', async () => {
   const f = await fixture();
   const origin = `http://192.168.10.30:${f.port}`;
   for (const wrongOrigin of ['https://unrelated.example', `http://192.168.10.30:${f.port + 1}`]) {
@@ -58,13 +58,13 @@ test('真实 Vite 代理：保留 Origin 后，非同源请求仍被拒绝', asy
   }
 });
 
-test('真实 Vite WebSocket 代理：局域网 Origin 无提示头仍可认证与同步', async () => {
+test('real Vite WebSocket proxy: LAN origins authenticate and sync without Fetch Metadata', async () => {
   const f = await fixture();
   const origin = `http://192.168.10.30:${f.port}`;
   const created = await f.post(origin, '/api/rooms', { name: 'GM', settings: { mode: 'short', gmCount: 1, dice: 'virtual' } });
   expect(created.status).toBe(201);
   const { session } = await created.json();
-  // 共用 TS 配置含 DOM；在此使用 Bun 支持的自定义请求头构造重载。
+  // The shared TypeScript config includes DOM types; use Bun's constructor overload for custom request headers here.
   const BunWebSocket = WebSocket as typeof WebSocket & { new(url: string, options: Bun.WebSocketOptions): WebSocket };
   const socket = new BunWebSocket(`${f.base.replace('http:', 'ws:')}/ws`, { headers: { Host: new URL(origin).host, Origin: origin } });
   cleanup.push(() => socket.close());

@@ -1,6 +1,6 @@
 import { test, expect } from 'bun:test';
 import { uuid } from '../shared/ids';
-test('局域网 HTTP 没有 randomUUID 时仍生成正确且不重复的命令 ID', () => {
+test('LAN HTTP generates valid unique command IDs when randomUUID is unavailable', () => {
   const fallback = { getRandomValues: crypto.getRandomValues.bind(crypto) };
   const ids = new Set(Array.from({ length: 200 }, () => uuid(fallback)));
   expect(ids.size).toBe(200);
