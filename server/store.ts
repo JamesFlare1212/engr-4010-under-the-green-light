@@ -88,7 +88,7 @@ export class Store {
       if (this.db.query('SELECT 1 FROM commands WHERE room_code=? AND member_id=? AND command_id=?').get(code, member.id, command.id)) return room;
       // 玩家操作绑定具体行动/投票 ID，允许多人基于同一版本并发提交。
       const concurrent = ['vote', 'volunteer', 'roll', 'profile', 'reflection'].includes(command.type);
-      requireThat(concurrent || room.revision === command.revision, '场次已被另一位主持更新，已同步最新状态，请检查后重试。', 'Another GM updated this session. The latest state is synced; review it and try again.', 'conflict', 409);
+      requireThat(concurrent || room.revision === command.revision, '场次已被其他成员更新，已同步最新状态，请检查后重试。', 'Another member updated this session. The latest state is synced; review it and try again.', 'conflict', 409);
       execute(room, member, command.type, command.payload);
       room.revision++;
       this.save(room);

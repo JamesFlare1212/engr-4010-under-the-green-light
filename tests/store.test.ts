@@ -62,3 +62,31 @@ test('拒绝降级写入未来数据库版本', () => {
   const path = join(dir, 'game.sqlite'); const store = new Store(path); store.db.exec('PRAGMA user_version=2'); store.db.close();
   expect(() => new Store(path)).toThrow('Database schema is newer');
 });
+test('所有成员都能生成交接草稿并保存未完成报告，私密权限保持独立', () => {
+  const f = fixture(); const observer = f.store.join(f.host.code, 'Observer');
+  f.send(f.host, 'role', { memberId: observer.memberId, role: 'spectator' });
+  const room = f.store.room(f.host.code); room.phase = 'ending'; room.gmNotes = 'GM ONLY'; f.store.save(room);
+  for (const s of [f.host, f.second, f.player, observer]) {
+    const generated = f.send(s, 'report_preset', { locale: 'en' });
+    expect(generated.report.statement).not.toBe('');
+    const saved = f.send(s, 'report', { ...generated.report, observations: `Written by ${s.memberId}`, owner: '', nextUpdate: '', statement: '' });
+    expect(saved.report.observations).toBe(`Written by ${s.memberId}`);
+    expect(saved.report.owner).toBe('');
+    expect(saved.logs.at(-1)!.actorId).toBe(s.memberId);
+  }
+  expect(f.store.view(f.store.room(f.host.code), observer.memberId, []).gmNotes).toBeUndefined();
+  expect(() => f.send(observer, 'notes', { text: 'Attempted private edit' })).toThrow();
+  expect(() => f.send(observer, 'override_tracks', {})).toThrow();
+});
+
+test('交接多人编辑使用版本检查，过期草稿不能覆盖其他成员的新内容', () => {
+  const f = fixture(); const other = f.store.join(f.host.code, 'Other player');
+  const room = f.store.room(f.host.code); room.phase = 'ending'; f.store.save(room);
+  const revision = room.revision;
+  f.send(f.player, 'report', { ...room.report, observations: 'Verified by player A' }, revision);
+  expect(() => f.send(other, 'report', { ...room.report, uncertainty: 'Draft from player B' }, revision)).toThrow('Another member updated');
+  const latest = f.store.room(f.host.code);
+  expect(latest.report.observations).toBe('Verified by player A'); expect(latest.report.uncertainty).toBe('');
+  const combined = f.send(other, 'report', { ...latest.report, uncertainty: 'Reviewed by player B' });
+  expect(combined.report).toMatchObject({ observations: 'Verified by player A', uncertainty: 'Reviewed by player B' });
+});

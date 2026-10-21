@@ -136,3 +136,22 @@ test('生产资源：深层房间路由返回应用，私密源文件不可读�
   expect(deep.headers.get('Content-Security-Policy')).toContain("font-src 'self' data:");
   const source = await fetch(`${base}/server/private.ts`); expect(source.status).toBe(404); expect(await source.text()).not.toContain('PRIVATE SOURCE');
 });
+
+test('交接协作：玩家和观察者保存后实时同步给全组，未填完整仍可存草稿', async () => {
+  const f = fixture(), host = await f.create(), player = await f.join(host, 'Player'), observer = await f.join(host, 'Observer');
+  await f.send(host, 'role', { memberId: observer.memberId, role: 'spectator' });
+  const room = f.app.store.room(host.code); room.phase = 'ending'; room.gmNotes = 'Private notes'; f.app.store.save(room);
+  const gmSocket = socket(f.base, host), playerSocket = socket(f.base, player), observerSocket = socket(f.base, observer);
+  await observerSocket.until(s => s.phase === 'ending');
+  const partial = await f.send(player, 'report', { ...room.report, observations: 'Count verified by the team' });
+  expect(partial.status).toBe(200); expect(partial.data.state.report.statement).toBe('');
+  await gmSocket.until(s => s.report.observations === 'Count verified by the team');
+  expect((await f.send(host, 'next')).status).toBe(400);
+  const preset = await f.send(observer, 'report_preset', { locale: 'en' }); expect(preset.status).toBe(200);
+  const saved = await f.send(observer, 'report', { ...preset.data.state.report, owner: 'Mira', nextUpdate: 'After verification', statement: 'Our actual public statement' });
+  expect(saved.status).toBe(200);
+  const shared = await playerSocket.until(s => s.report.owner === 'Mira');
+  expect(shared.report.statement).toBe('Our actual public statement'); expect(shared.gmNotes).toBeUndefined();
+  const unauthenticated = await f.api(`/api/rooms/${host.code}/commands`, { id: crypto.randomUUID(), revision: shared.revision, type: 'report', payload: shared.report });
+  expect(unauthenticated.status).toBe(401);
+});

@@ -261,11 +261,11 @@ export function execute(room: Room, member: Member, type: string, input: unknown
       log(room, member.id, bi(`调整实际结果：${reason}`, `Adjusted fictional outcomes: ${reason}`)); break;
     }
     case 'report': {
-      gm(); room.report = parse(z.object({ observations: text, uncertainty: text, owner: z.string().max(200), nextUpdate: z.string().max(200), statement: text, restrictions: text, backup: text, truthfulness: z.enum(['unreviewed', 'accurate', 'incomplete', 'misleading']) }), payload);
+      room.report = parse(z.object({ observations: text, uncertainty: text, owner: z.string().max(200), nextUpdate: z.string().max(200), statement: text, restrictions: text, backup: text, truthfulness: z.enum(['unreviewed', 'accurate', 'incomplete', 'misleading']) }), payload);
       log(room, member.id, bi('保存事故通报与具名交接。', 'Saved the public statement and named handover.')); break;
     }
     case 'report_preset': {
-      gm(); const data = parse(z.object({ locale: z.enum(['zh-CN', 'en']) }), payload); const l = data.locale;
+      const data = parse(z.object({ locale: z.enum(['zh-CN', 'en']) }), payload); const l = data.locale;
       const t = tracks(room);
       room.report.observations = bi(`${t.evacuated} 人已撤离，${t.waiting} 人待援，${t.observation} 人需观察。设施：${isolationLabels[t.isolation]['zh-CN']}。`, `${t.evacuated} evacuated, ${t.waiting} awaiting rescue, ${t.observation} need observation. Facility: ${isolationLabels[t.isolation].en}.`)[l];
       room.report.uncertainty = bi('绿灯最后回传 17:10，仅验证低负荷。尚未确认的事项需要现场复核。', 'The green status is from a 17:10 low-load test. Unconfirmed conditions need local verification.')[l];
