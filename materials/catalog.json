@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "collectedAt": "2026-10-21",
+  "description": "Curated originals and searchable derivatives for local project preparation; ownership and provenance in docs/SOURCES.md.",
+  "sources": [
+    {
+      "id": "course-syllabus",
+      "category": "course",
+      "title": "ENGR 4010 PDLC Fall 2026 Lead RPG Syllabus",
+      "path": "materials/course/originals/syllabus.pdf",
+      "textPath": "materials/text/course/syllabus.txt",
+      "nature": "course-issued",
+      "origin": {
+        "kind": "authenticated-course-download",
+        "originalFileName": "syllabus.pdf"
+      },
+      "sha256": "9fe6250175ba927c554b1779ab61dbdd22ccc866a1dcab4af430feb4f5ec01aa",
+      "bytes": 639679,
+      "publishByDefault": false
+    },
+    {
+      "id": "course-rules",
+      "category": "course",
+      "title": "ENGR 4010 Game Rules & Mechanics",
+      "path": "materials/course/originals/game-rules.pdf",
+      "textPath": "materials/text/course/game-rules.txt",
+      "nature": "course-issued",
+      "origin": {
+        "kind": "authenticated-course-download",
+        "originalFileName": "rules.pdf"
+      },
+      "sha256": "7b12fb7194b71d5a5df9fac15b9526a94545093c32e10591194b8a7c06a43631",
+      "bytes": 257057,
+      "publishByDefault": false
+    },
+    {
+      "id": "course-nspe",
+      "category": "course",
+      "title": "NSPE Code of Ethics for Engineers (course reading)",
+      "path": "materials/course/originals/nspe-code-of-ethics.pdf",
+      "textPath": "materials/text/course/nspe-code-of-ethics.txt",
+      "nature": "course-issued",
+      "origin": {
+        "kind": "authenticated-course-download",
+        "originalFileName": "nspe.pdf"
+      },
+      "sha256": "62847da5598046bbcd24bab7072849dffbb46709b246eb06afbb1110ff8b090a",
+      "bytes": 59501,
+      "publishByDefault": false,
+      "note": "The course PDF states revised July 2019; retained as the assigned edition."
+    },
+    {
+      "id": "course-class6",
+      "category": "course",
+      "title": "PDLC Lead RPG Class 6 Fall 2026",
+      "path": "materials/course/originals/class-6.pptx",
+      "textPath": "materials/text/course/class-6-slides.txt",
+      "nature": "course-issued",
+      "origin": {
+        "kind": "authenticated-course-download",
+        "originalFileName": "class6.pptx"
+      },
+      "sha256": "ece9bd35595cf139cb94171254257cf165ead1c897588c020207483a8a0f350c",
+      "bytes": 368187,
+      "publishByDefault": false
+    },
+    {
+      "id": "guild-headquarters",
+      "category": "guild",
+      "title": "Guardians of the Galaxy HQ",
+      "path": "materials/guild/originals/headquarters.docx",
+      "textPath": "materials/text/guild/headquarters.txt",
+      "nature": "guild-worldbuilding",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "GUardians of the Galaxy HQ.docx"
+      },
+      "sha256": "22e729b82768cbbe87c5b36d48a7118ff3fc38731d67672dd96070d2b9d97081",
+      "bytes": 9465728,
+      "publishByDefault": false,
+      "note": "The Shell and Luminis Sea setting."
+    },
+    {
+      "id": "guild-mission",
+      "category": "guild",
+      "title": "Guardian Guild Mission Statement",
+      "path": "materials/guild/originals/mission-statement.docx",
+      "textPath": "materials/text/guild/mission-statement.txt",
+      "nature": "guild-worldbuilding",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "Guardian Guild Mission Statement.docx"
+      },
+      "sha256": "b2cd9798e1fc9428d5b6da2e1b8c49830ff75a0913f6233b126282cb71d3d533",
+      "bytes": 6703,
+      "publishByDefault": false,
+      "note": "Protect lifeforms; loyalty, communication and collaboration."
+    },
+    {
+      "id": "guild-first-gm",
+      "category": "guild",
+      "title": "GM WEEK 1",
+      "path": "materials/guild/originals/first-co-gm-prep.docx",
+      "textPath": "materials/text/guild/first-co-gm-prep.txt",
+      "nature": "mixed-course-prompt-and-student-notes",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "GM WEEK 1.docx"
+      },
+      "sha256": "a1cd23cdf84be681363970f4c59ba3d52f5fe7e30162abb1018792c6a0d92388",
+      "bytes": 12668,
+      "publishByDefault": false,
+      "note": "20–25 minutes and 2–4 rolls apply to that first encounter only."
+    },
+    {
+      "id": "guild-priorities",
+      "category": "guild",
+      "title": "Nemorath Communication & Guild Prioritization Task",
+      "path": "materials/guild/originals/priorities.docx",
+      "textPath": "materials/text/guild/priorities.txt",
+      "nature": "mixed-course-prompt-and-student-notes",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "Nemorath Communication & Guild Prioritization Task.docx"
+      },
+      "sha256": "fd3e74885f26d6a51f38099824b94e6e463a5e7e90ea74d450ea24472984d838",
+      "bytes": 8267,
+      "publishByDefault": false,
+      "note": "Priorities and inter-guild coordination."
+    },
+    {
+      "id": "guild-culture",
+      "category": "guild",
+      "title": "Organizational Culture Guild Reflection",
+      "path": "materials/guild/originals/organizational-culture.docx",
+      "textPath": "materials/text/guild/organizational-culture.txt",
+      "nature": "student-reflection",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "Organizational Cultural_Guild Reflection Worksheet_Class 7.docx"
+      },
+      "sha256": "9d2280b857e6f63467388e2ff3fb8a6ec24401a43f9d2226ad284203095ddfcb",
+      "bytes": 9346,
+      "publishByDefault": false,
+      "note": "Group values and assumptions, not official game rules."
+    },
+    {
+      "id": "guild-alternative-campaign",
+      "category": "guild",
+      "title": "Jacob and Gautam Co-GM Campaign",
+      "path": "materials/guild/originals/alternative-campaign.docx",
+      "textPath": "materials/text/guild/alternative-campaign.txt",
+      "nature": "alternative-student-campaign",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "Jacob and Gautam CO-GM campaign.docx"
+      },
+      "sha256": "a2f0dc374702fa803e123f4fd8f20011f947f32f0e4c90e977f1cec19b9875ec",
+      "bytes": 12613,
+      "publishByDefault": false,
+      "note": "Reference only; Boss/Readiness rules are not rules for this scenario."
+    },
+    {
+      "id": "scenario-gm",
+      "category": "scenario",
+      "title": "Under the Green Light - GM Script.docx",
+      "path": "materials/scenario/draft-v1/Under the Green Light - GM Script.docx",
+      "textPath": "materials/text/scenario/gm-script.txt",
+      "nature": "ai-assisted-original-draft",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "Under the Green Light - GM Script.docx"
+      },
+      "sha256": "e5c19bebbe714e0f6765fd24c70079a5ecbb99b9646f61e188ecc338116ea4d5",
+      "bytes": 52682,
+      "publishByDefault": false
+    },
+    {
+      "id": "scenario-player",
+      "category": "scenario",
+      "title": "Under the Green Light - Player Pack.docx",
+      "path": "materials/scenario/draft-v1/Under the Green Light - Player Pack.docx",
+      "textPath": "materials/text/scenario/player-pack.txt",
+      "nature": "ai-assisted-original-draft",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "Under the Green Light - Player Pack.docx"
+      },
+      "sha256": "253b5c7f9fb4243e75b2f17a193a7119baedf5e1f33f92fe2d2a1fa8dcf0a125",
+      "bytes": 42543,
+      "publishByDefault": false
+    },
+    {
+      "id": "scenario-flowchart",
+      "category": "scenario",
+      "title": "Under the Green Light interactive flowchart",
+      "path": "materials/scenario/draft-v1/Under the Green Light - Flowchart.html",
+      "textPath": null,
+      "nature": "ai-assisted-original-draft",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "Under the Green Light - Flowchart.html"
+      },
+      "sha256": "6d064be0b0e8faf0712ff9b83fa7b81ebd65a8cdd58ebb0cbb6145b6a7ba4390",
+      "bytes": 130130,
+      "publishByDefault": false,
+      "note": "Standalone offline HTML; embedded subset of Noto Sans SC with license in HTML comments."
+    },
+    {
+      "id": "flowchart-font-license",
+      "category": "scenario",
+      "title": "SIL Open Font License for embedded Noto Sans SC",
+      "path": "materials/scenario/draft-v1/Flowchart Font License.txt",
+      "textPath": null,
+      "nature": "third-party-font-license",
+      "origin": {
+        "kind": "workspace-file",
+        "originalFileName": "Flowchart Font License.txt"
+      },
+      "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+      "bytes": 4388,
+      "publishByDefault": false
+    }
+  ]
+}

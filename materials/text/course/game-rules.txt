@@ -1,0 +1,87 @@
+PAGE 1
+ENGR 4010 - PDLC LEAD RPG Game Rules & Mechanics
+This is a cooperative narrative system. We play by co-creating our world and using
+a D20 die system to help us understand the consequences of decisions and
+experience navigating ambiguity and uncertainty – both are important leadership
+competencies!
+These game rules are a foundation, and as we build our world, we will add, adjust,
+and clarify these rules together.
+Unless specified before the game, no use of phones or computers while in
+gameplay.
+The Dice: This game primarily uses a twenty-sided die (D20).
+Skill Checks: When a character attempts an action that has a chance of failure or
+varying degrees of success, they perform a skill check. This involves rolling the die
+and adding any relevant bonuses (e.g., a skill/leadership competency or
+equipment bonus).
+Characters’ Leadership
+Competencies/Engineering
+Skills/Tools
+Relevant Bonus
+Action uses a Leadership Competency +3
+Action uses Engineering Skills +2
+Action uses Tool +1
+
+Setting Difficulties: As the GM, you will set a difficulty for actions. This is a
+number that players must meet or exceed with their dice roll to succeed. If they
+get close but don’t succeed, it is engaging and fun to give them a partial success
+that comes with a twist. You want to avoid situations where the result is “nothing
+happens” or they don't get any new information.
+
+
+
+PAGE 2
+DC Type DC Type
+20 Legendary 8-10 Average
+17-19 Heroic 5-7 Easy
+14-16 Great 2-4 Simple
+11-13 Good 1 Catastrophic
+
+Rolling the Dice: When a player declares an action, the facilitator prompts them
+to roll the die and add any applicable modifiers. Compare the total to the
+difficulty you set.
+Dice outcomes
+Roll-DC Title  Narrative Description
++3 Succeed with a boon Success with a major
+benefit
+0 (at target) Near success Come close and then
+succeed
+-1 or -2 Near miss Partial success with
+complication/cost
+-3 or -4 Fail with a twist Fail with a minor benefit
+-5 or more Fail with
+consequences
+Fail with a major
+complication
+
+Success with a Boon: If the total exceeds the difficulty by 3 or more, the action
+succeeds and includes a major benefit.
+Near Success: If the total meets the difficulty, the action comes close and ends up
+succeeding
+
+PAGE 3
+Near Miss: If the roll is close to the difficulty but not quite there, only 1-2 off,
+consider a partial success where the action gets some kind of result but with
+some complication, or different than what the player intended.
+Fail with a Twist: If the total is less than the DC by 3-4, the action does not go as
+intended. The action itself fails, but there are other minor benefits that may
+happen as a result or in addition to the action failure.
+
+Fail with Consequences: If the total is less than the DC by 5 or more, the action
+fails with a major complication. Use this to make things interesting by presenting
+unintended consequences or presenting new challenges that still move the story
+forward and engage the players more than being punishing
+
+Interpreting Results: Use the results of the dice rolls to narrate the story.
+Describe the outcomes vividly to keep the players engaged.
+Example: If a player rolls a 17 to use a microscope and the difficulty was 15, you
+might say, "You peer through the microscope and clearly see evidence of life
+swarming in the sample, confirming your suspicions. And what’s more, you notice
+something else…”
+Example: If a player rolls an 8 to get information from a non-player character
+(NPC) and the difficulty was 10, you might say, "Despite your best efforts, they
+remains unconvinced and refuse to share any information. But, you notice out of
+the corner of your eye that they keep glancing over towards…"
+
+Encouraging Creativity: If players come up with creative actions, reward them by
+lowering the difficulty or incorporating their idea somehow even if the dice fail.
+This encourages out-of-the-box thinking and makes the game more dynamic.

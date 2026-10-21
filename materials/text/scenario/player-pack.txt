@@ -1,0 +1,100 @@
+UNDER THE GREEN LIGHT
+PLAYER BRIEFING  /  GUARDIANS GUILD
+The Shell, Luminis Sea, Heliora Prime
+The situation
+The coastal pump station is flooding. Twelve maintenance workers are inside. Your screen says GREEN — SAFE TO OPERATE. A storm surge will arrive in twelve fictional minutes. Once your plan is ready, you have three action windows. Discussion time does not secretly consume those windows.
+Your three objectives
+OPEN A ROUTE. Build or secure a usable rescue path.
+MOVE THE PEOPLE. Account for twelve workers; two need assisted movement.
+ISOLATE THE HAZARD. Verify the local shutdown and medical power handover.
+Known safeguards and equipment
+An upper refuge can hold four people for roughly two hours if evacuation is incomplete. The outside rescue crew arrives after the surge eases. The clinic has independent backup for twenty minutes. The station and refuge safeguards are separate. Shutdown affects noncritical Shell labs until the next day; it does not instantly cut clinic power.
+Available: safety lines, harnesses, a hand winch, an eight-person-rated workboat, two NPC boat crew, and an exterior manual gate. The boat has six evacuee seats after its two crew; two trips move twelve people. You also have TWO shared emergency kits.
+Choices you can propose
+HIGH LINE: cliff rescue. Known cost: leave the heavy spare motor below the flood line for later repair or replacement.
+QUIET WATER: two boat trips; secure the motor on its high rack from the sea-side hatch. Known cost: replace the spent lab battery pack and leave low-level tool crates behind. Clinic backup stays separate.
+BORROWED CHANNEL: divert the water, then use the walkway. Known cost: disturb part of a nursery shallows for a season; commit to restoration and clean the motor.
+YOUR PLAN: combine or replace these approaches. Explain access, people, isolation, and the assumptions your plan depends on.
+This draft’s session conventions
+D20 + one justified bonus: Leadership +3 OR Engineering +2 OR Tool +1. Preparation or a concrete creative solution may lower the relevant execution DC by up to 2; these reductions do not stack. Base execution DCs: route 12, people 12, isolation 13. Teacher instructions take priority.
+After seeing an execution result, the group may spend one emergency kit to improve it by one result tier, at most once per roll and never above ordinary success. There are no extra natural-1 penalties. Say what you try; the GMs explain the result.
+
+EVIDENCE CARDS
+Cut along the spaces if useful. Share each card aloud; nobody has to solve the mystery alone.
+CARD A / THE GREEN LIGHT
+CONTROL SCREEN: SAFE TO OPERATELast received status: 17:10Test condition: low loadCurrent time: 17:40Expected surge: 17:52Change log: temporary bypass installed; full-surge verification PENDING.
+A gull-damaged return cable cannot send a fresh status. The local mechanical indicator is still readable. Water is entering the station now.
+Discuss: What does the old test establish? What does it fail to establish? What must you verify locally?
+________________________________________________________________
+CARD B / THE THREE ROUTES
+CLIFF: an anchor point and a hand winch are available; check their setup. SEA: a short lee-side calm window supports two workboat trips. CHANNEL: an exterior manual gate can reduce water around the walkway; runoff crosses nursery shallows.
+All three routes have basic equipment available. None requires a specific character class. A useful plan can combine routes. There is no hidden fourth route you must guess.
+Discuss: What can go wrong? What would make the route usable? Which consequence are you willing to accept?
+________________________________________________________________
+CARD C / PEOPLE AND HANDOVER
+Twelve workers; two need assisted movement. Four can wait in the upper dry refuge for roughly two hours. Clinic backup has twenty minutes. A named person must coordinate power handover before it ends. The backup rescue crew has been told when the surge window closes.
+The incident-report fields for operating limits, unverified conditions, verification owner, and next update are blank.
+Discuss: How will you count people? Who handles the medical handover? What can you responsibly promise?
+________________________________________________________________
+
+STAKEHOLDER PROMPTS
+Optional: three players can voice these concerns during discussion, then return to their own characters. No secret objectives or player-versus-player rewards.
+MIRA / BUILDERS
+You approved the temporary bypass. The low-load test passed; the full-surge test was not completed. You want the workers safe, but you also fear losing the spare motor and everyone’s confidence.
+Opening: “Could we keep the green status while we work? I am afraid the other guilds will stop trusting our equipment.”
+You can offer structural knowledge and practical help. If the group asks for honest limits and a correction, cooperate. You do not withhold rescue help when they refuse an unrestricted safety statement.
+Question for the group: “What exactly can we certify, and who verifies it?”
+________________________________________________________________
+TAVI / LINKERS
+You have an open communication channel. Other guilds need usable instructions, not certainty that the evidence cannot support.
+Opening: “Give me what we know, what we do not know, and what people should do now. I can update the message later.”
+You can transmit the location, hazards, headcount, restrictions and next update. You preserve the original message and record later corrections.
+Question for the group: “Who needs this information, and when will we update them?”
+________________________________________________________________
+DR. VALE / LIFE WEAVERS
+Two workers need assistance. You have independent clinic backup for twenty minutes. You need a realistic arrival plan and a named power-handover contact.
+Opening: “Tell me who needs assistance, who is bringing them, and who will confirm my next power source.”
+You help once the group gives workable arrangements. You do not rank lives by status or make rescue conditional on a persuasion roll.
+Question for the group: “Whose needs are missing from our plan?”
+
+EVERYONE HAS A JOB
+Six temporary focus roles. Keep your own character; choose or swap a focus. No focus grants extra numerical bonuses or exclusive access.
+1 / STRUCTURES & ACCESS
+Ask what supports the route. Explain a check of anchors, walkway, mooring or barriers. Lead one preparation or execution action.
+2 / WATER & ENVIRONMENT
+Observe the tide, calm water and nursery shallows. Identify a route cost and a way to reduce harm.
+3 / PEOPLE & CARE
+Plan assisted movement and a headcount. Ask who receives the workers and checks the medical handover.
+4 / POWER & TOOLS
+Distinguish a screen claim from verified local state. Consult the appropriate expert before confirming isolation.
+5 / COMMUNICATION & TRUST
+Draft a short factual message. Invite one concern the group has not heard. Name an owner and a next update.
+6 / COORDINATION & CHALLENGE
+Summarize the plan, capacity limits and fallback. Ask one respectful “what if?” before the group commits.
+Before each roll
+“I will __________ so that __________. My relevant skill, competency or tool is __________. __________ will help by __________. If this fails, our fallback is __________.”
+Make a group choice
+Our route: ____________________________________________________Our three action leads: ___________________________________________A consequence we knowingly accept: ________________________________One assumption to verify: _________________________________________One voice or need we have not yet included: __________________________
+A different opinion is useful information. You can speak briefly, point to a card, or ask someone to read your idea. Performance and accents are optional.
+
+INCIDENT REPORT & DEBRIEF
+Complete in brief phrases or give a 30-second spoken handover. This is an in-game worksheet, not a claim of engineering certification.
+1 / WHAT WE KNOW
+Verified observations and current headcount:
+________________________________________________________________________________________________________________________________
+2 / WHAT REMAINS UNCERTAIN
+Unverified equipment, people waiting, medical or environmental follow-up:
+________________________________________________________________________________________________________________________________
+3 / OUR DECISION
+Route, reason, accepted consequences, and any change of plan:
+________________________________________________________________________________________________________________________________
+4 / NEXT ACTION
+Named owner, restrictions, backup arrangements, and next update time:
+________________________________________________________________________________________________________________________________
+After the story: step out of character
+Which evidence did we trust first? What changed our minds?
+Who bore the cost of our plan? Whose voice did we miss?
+How did we handle safety, competence, truthfulness, and correction of errors?
+What one process would we use in a real engineering team next time?
+One specific contribution I appreciated: ______________________________One thing I would change about my own teamwork: ______________________
+This fictional module adds the pump station, local incident, NPCs and session conventions to the class world. Apply your instructor’s current rules and timeline. AI-assisted preparation draft; course use follows the syllabus requirements.

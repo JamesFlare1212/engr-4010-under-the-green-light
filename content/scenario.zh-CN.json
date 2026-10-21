@@ -1,0 +1,561 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "under-the-green-light",
+  "scenarioVersion": "0.1.0-draft",
+  "title": {
+    "zh-CN": "绿灯之下",
+    "en": "Under the Green Light"
+  },
+  "status": "development-seed-not-an-implemented-game",
+  "contentNote": "Structured adaptation of the authored draft, not an official course rules publication. Longer narration is in the GM/player texts. Reconcile edits manually.",
+  "sourceIds": [
+    "course-syllabus",
+    "course-rules",
+    "course-nspe",
+    "course-class6",
+    "guild-headquarters",
+    "guild-mission",
+    "guild-first-gm",
+    "guild-priorities",
+    "scenario-gm",
+    "scenario-player"
+  ],
+  "party": {
+    "coGMs": 2,
+    "defaultPlayers": 6,
+    "minimumSuggestedPlayers": 4,
+    "maximumSuggestedPlayers": 8,
+    "rolesAreExclusive": false
+  },
+  "modes": {
+    "full": {
+      "gameplayMinutes": 45,
+      "debriefMinutes": 10,
+      "evaluationMinutesSuggested": 5,
+      "preparationChecks": true,
+      "leadRotation": "Three different preparation leads, then three other execution leads."
+    },
+    "short": {
+      "gameplayMinutes": 20,
+      "debriefMinutes": 5,
+      "evaluationMinutesSuggested": null,
+      "preparationChecks": false,
+      "leadRotation": "Six players form three pairs; each pair leads one execution objective."
+    }
+  },
+  "setting": {
+    "canon": {
+      "oldPlanet": "Nemorath",
+      "newPlanet": "Heliora Prime",
+      "region": "Luminis Sea",
+      "headquarters": "The Shell",
+      "guild": "Guardians",
+      "mission": "保护其他生命，以忠诚、积极沟通和开放协作共同保障安全。",
+      "knownAlly": "Maid-Mer：鱼身人腿，前次记录中与公会交好。"
+    },
+    "scenarioFiction": {
+      "site": "The Shell 外围独立潮汐泵站",
+      "workers": 12,
+      "workersNeedingAssistance": 2,
+      "lastStatusTime": "17:10",
+      "currentStoryTime": "17:40",
+      "surgeExpectedTime": "17:52",
+      "statusTestCondition": "低负荷",
+      "fullSurgeVerification": "待完成",
+      "statusFailureCause": "回传线损坏，屏幕仍显示旧安全状态；现场机械指示可读。",
+      "refugeCapacity": 4,
+      "refugeProtectionMinutes": 120,
+      "clinicIndependentBackupMinutes": 20,
+      "boatRatedCapacityIncludingCrew": 8,
+      "boatCrew": 2,
+      "evacueesPerTrip": 6,
+      "boatTrips": 2,
+      "storyMinutesAreRealCountdown": false,
+      "transportShipOutcomesChanged": false
+    }
+  },
+  "rules": {
+    "courseFoundation": {
+      "dieSides": 20,
+      "bonusOptions": [
+        {
+          "id": "none",
+          "value": 0
+        },
+        {
+          "id": "tool",
+          "value": 1
+        },
+        {
+          "id": "engineering",
+          "value": 2
+        },
+        {
+          "id": "leadership",
+          "value": 3
+        }
+      ],
+      "sourceId": "course-rules"
+    },
+    "draftConventions": {
+      "bonusPolicy": "choose-one-relevant",
+      "naturalOneExtraPenalty": false,
+      "preparationDC": 11,
+      "preparationReduction": 2,
+      "creativeReductionMaximum": 2,
+      "combineReductions": "maximum-not-sum",
+      "emergencyKitsInitial": 2,
+      "kitsUsableIn": "execution-only",
+      "kitsPerCheckMaximum": 1,
+      "kitsImproveTiers": 1,
+      "kitResultCeiling": "success",
+      "importantEvidenceAvailableAfterFailure": true,
+      "failedChecksIncreaseLaterDC": false,
+      "oneExecutionCheckPerObjective": true
+    },
+    "outcomeTiersAscending": [
+      {
+        "id": "consequences",
+        "label": "失败并有后果",
+        "deltaMin": null,
+        "deltaMax": -5
+      },
+      {
+        "id": "twist",
+        "label": "失败但有转机",
+        "deltaMin": -4,
+        "deltaMax": -3
+      },
+      {
+        "id": "near_miss",
+        "label": "接近成功／部分成功",
+        "deltaMin": -2,
+        "deltaMax": -1
+      },
+      {
+        "id": "success",
+        "label": "成功",
+        "deltaMin": 0,
+        "deltaMax": 2
+      },
+      {
+        "id": "boon",
+        "label": "成功并获益",
+        "deltaMin": 3,
+        "deltaMax": null
+      }
+    ]
+  },
+  "stages": [
+    {
+      "id": "briefing",
+      "label": "危机开场",
+      "fullMinutes": [
+        0,
+        4
+      ],
+      "shortMinutes": [
+        0,
+        3
+      ]
+    },
+    {
+      "id": "investigation",
+      "label": "调查与准备",
+      "fullMinutes": [
+        4,
+        13
+      ],
+      "shortMinutes": [
+        3,
+        7
+      ],
+      "shortModeNote": "共享线索，跳过准备检定。"
+    },
+    {
+      "id": "negotiation",
+      "label": "NPC协商",
+      "fullMinutes": [
+        13,
+        20
+      ],
+      "shortMinutes": [
+        7,
+        9
+      ]
+    },
+    {
+      "id": "route_choice",
+      "label": "选择路线与公开代价",
+      "fullMinutes": [
+        20,
+        24
+      ],
+      "shortMinutes": null,
+      "shortModeNote": "并入3–9分钟的讨论。"
+    },
+    {
+      "id": "execution",
+      "label": "逐个结算三个目标",
+      "fullMinutes": [
+        24,
+        40
+      ],
+      "shortMinutes": [
+        9,
+        17
+      ]
+    },
+    {
+      "id": "ending",
+      "label": "分项结局与事故通报",
+      "fullMinutes": [
+        40,
+        45
+      ],
+      "shortMinutes": [
+        17,
+        20
+      ]
+    },
+    {
+      "id": "debrief",
+      "label": "退出角色、复盘与评价",
+      "fullMinutes": null,
+      "shortMinutes": null,
+      "note": "复盘用时在游戏用时之外。"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence-status",
+      "title": "冻住的绿灯",
+      "publicFacts": [
+        "最后回传17:10，测试仅覆盖低负荷。",
+        "现在17:40，满负荷验证待完成。",
+        "海鸥损坏状态回传线，本地机械指示仍可读取。"
+      ],
+      "prompt": "旧测试证明了什么？还应验证什么？"
+    },
+    {
+      "id": "evidence-routes",
+      "title": "三条可走的路",
+      "publicFacts": [
+        "崖壁锚点、手摇绞盘可用。",
+        "背风平水区支持工作艇两趟转运。",
+        "外部手动泄洪渠经过育幼浅滩。"
+      ],
+      "prompt": "通路需要怎样验证？谁承担方案代价？"
+    },
+    {
+      "id": "evidence-people",
+      "title": "十二个人与交接",
+      "publicFacts": [
+        "12名工人，2人需要协助移动。",
+        "4人可在独立干燥避难室临时等待约两小时。",
+        "诊所有20分钟独立备用电源；需要具名联系人安排后续交接。",
+        "通报模板的适用条件、未验证项与责任人尚空白。"
+      ],
+      "prompt": "怎样清点人数、安排照护，并明确承诺？"
+    }
+  ],
+  "npcs": [
+    {
+      "id": "mira",
+      "name": "Mira",
+      "guild": "Builders",
+      "interest": "人员安全、设备和工程信誉。",
+      "privateContext": "批准临时旁路，尚未完成暴潮负荷验证，担心失去信任。",
+      "cooperationBoundary": "拒绝无条件安全签字不会使其拒绝救人。",
+      "dialogue": "I approved the temporary bypass. The low-load test passed, but I did not finish the surge test. If we abandon the station, we lose the spare motor. Could you sign the green status so the other guilds do not panic?"
+    },
+    {
+      "id": "tavi",
+      "name": "Tavi",
+      "guild": "Linkers",
+      "interest": "向其他公会发出真实、可执行、可更新的信息。",
+      "privateContext": "保留原始通报和后续修正。",
+      "cooperationBoundary": "事实通报无需说服骰。",
+      "dialogue": "Give me three things: what you know, what you do not know, and what you need people to do. I can transmit a warning now and update it later."
+    },
+    {
+      "id": "vale",
+      "name": "Dr. Vale",
+      "guild": "Life Weavers",
+      "interest": "协助行动不便者，明确医疗与供电交接。",
+      "privateContext": "独立备用电源维持20分钟，需要下一名责任人。",
+      "cooperationBoundary": "按需求照护，不按身份给生命排序；可执行安排就足以合作。",
+      "dialogue": "Two workers need assisted movement. My backup power lasts twenty minutes. Give me the handover time and a named contact. Do not promise continuous power unless you have verified it."
+    }
+  ],
+  "routes": [
+    {
+      "id": "high_line",
+      "title": "崖壁吊运",
+      "englishTitle": "The High Line",
+      "method": "高位锚点、安全绳和手摇绞盘接人。",
+      "knownCosts": [
+        "备用电机留在下层，后续检修或更换。",
+        "总部非关键实验室停用到次日。"
+      ],
+      "objectiveIds": [
+        "access",
+        "evacuation",
+        "isolation"
+      ]
+    },
+    {
+      "id": "quiet_water",
+      "title": "海上转运",
+      "englishTitle": "The Quiet Water",
+      "method": "工作艇两趟各运6人；在海侧检修口将电机固定到高位架。",
+      "knownCosts": [
+        "损耗一组移动电池，需更换。",
+        "低层工具箱留下。",
+        "总部非关键实验室停用到次日。"
+      ],
+      "clinicBackupCanBeConsumed": false,
+      "objectiveIds": [
+        "access",
+        "evacuation",
+        "isolation"
+      ]
+    },
+    {
+      "id": "borrowed_channel",
+      "title": "外部泄洪",
+      "englishTitle": "The Borrowed Channel",
+      "method": "外侧手动分流后沿检修步道撤离，再隔离危险。",
+      "knownCosts": [
+        "扰动部分育幼浅滩一季，需安排生态修复。",
+        "电机受到泥沙污染，需清理。",
+        "总部非关键实验室停用到次日。"
+      ],
+      "objectiveIds": [
+        "access",
+        "evacuation",
+        "isolation"
+      ]
+    },
+    {
+      "id": "custom",
+      "title": "混合或自创",
+      "method": "玩家说明三个目标分别怎样完成，公开验证假设与所接受代价。",
+      "knownCosts": [],
+      "costsEnteredByGM": true,
+      "objectiveIds": [
+        "access",
+        "evacuation",
+        "isolation"
+      ],
+      "extraChecksRequiredByDefault": false
+    }
+  ],
+  "preparationChecks": [
+    {
+      "id": "prepare-access",
+      "objectiveId": "access",
+      "label": "结构与路线",
+      "dc": 11
+    },
+    {
+      "id": "prepare-evacuation",
+      "objectiveId": "evacuation",
+      "label": "人员与交接",
+      "dc": 11
+    },
+    {
+      "id": "prepare-isolation",
+      "objectiveId": "isolation",
+      "label": "能源与证据",
+      "dc": 11
+    }
+  ],
+  "objectives": [
+    {
+      "id": "access",
+      "label": "建立通路",
+      "baseDC": 12,
+      "outcomes": {
+        "boon": {
+          "narrative": "稳固通路开放，额外取回个人工具或故障记录。",
+          "routeUsable": true
+        },
+        "success": {
+          "narrative": "按计划开放通路。",
+          "routeUsable": true
+        },
+        "near_miss": {
+          "narrative": "通路开放，一件可替换的公共装备损坏；不剥夺唯一工具加成。",
+          "routeUsable": true
+        },
+        "twist": {
+          "narrative": "改用预置慢速手动备用通路，普通物资被卷走，仍可转移。",
+          "routeUsable": true
+        },
+        "consequences": {
+          "narrative": "主通路损坏，改用狭窄备用通路；下层工棚需修复，仍可转移。",
+          "routeUsable": true
+        }
+      }
+    },
+    {
+      "id": "evacuation",
+      "label": "转移人员",
+      "baseDC": 12,
+      "outcomes": {
+        "boon": {
+          "narrative": "12人安全撤离，额外带回基本医疗物资。",
+          "evacuated": 12,
+          "waitingInRefuge": 0,
+          "needsObservation": 0,
+          "refugeRadioAvailable": null
+        },
+        "success": {
+          "narrative": "12人安全撤离并完成清点。",
+          "evacuated": 12,
+          "waitingInRefuge": 0,
+          "needsObservation": 0,
+          "refugeRadioAvailable": null
+        },
+        "near_miss": {
+          "narrative": "12人全部撤离，其中2人需要观察及医疗交接。",
+          "evacuated": 12,
+          "waitingInRefuge": 0,
+          "needsObservation": 2,
+          "refugeRadioAvailable": null
+        },
+        "twist": {
+          "narrative": "8人撤离，4人在上层避难室待援，双向联系保持。",
+          "evacuated": 8,
+          "waitingInRefuge": 4,
+          "needsObservation": 0,
+          "refugeRadioAvailable": true
+        },
+        "consequences": {
+          "narrative": "8人撤离，4人在同一避难室待援，无线电失效但位置与名单已保留。",
+          "evacuated": 8,
+          "waitingInRefuge": 4,
+          "needsObservation": 0,
+          "refugeRadioAvailable": false
+        }
+      }
+    },
+    {
+      "id": "isolation",
+      "label": "隔离危险",
+      "baseDC": 13,
+      "outcomes": {
+        "boon": {
+          "narrative": "隔离验证和诊所交接完成，保存原始日志并找到备件。",
+          "isolationStatus": "verified",
+          "clinicHandover": "complete"
+        },
+        "success": {
+          "narrative": "隔离和备用供电交接完成；报告真实性仍取决于实际表达。",
+          "isolationStatus": "verified",
+          "clinicHandover": "complete"
+        },
+        "near_miss": {
+          "narrative": "隔离完成但临时封堵需次日复核，具名负责人接手。",
+          "isolationStatus": "temporary-recheck-required",
+          "clinicHandover": "complete"
+        },
+        "twist": {
+          "narrative": "隔离未验证，外围封锁；独立备用供电正常，机械指示保留检修线索。",
+          "isolationStatus": "unverified-cordon",
+          "clinicHandover": "follow-up-required"
+        },
+        "consequences": {
+          "narrative": "泵站封锁，部分设备被淹；诊所仍有已知备用保障，必须在保障结束前安排后续供电。",
+          "isolationStatus": "unverified-damage",
+          "clinicHandover": "urgent-follow-up-required"
+        }
+      }
+    }
+  ],
+  "reportFields": [
+    "verifiedObservations",
+    "headcount",
+    "remainingUncertainty",
+    "selectedRouteAndReason",
+    "acceptedConsequences",
+    "responsibleOwner",
+    "restrictions",
+    "backupArrangements",
+    "nextUpdateTime",
+    "actualPublicStatement"
+  ],
+  "endingPolicy": {
+    "aggregateMoralScore": false,
+    "courseGradeFromDice": false,
+    "separateTracks": [
+      "people",
+      "facilities",
+      "trust"
+    ],
+    "preserveAcceptedRouteCosts": true,
+    "isolationCanUndoEvacuation": false,
+    "highRollCanRewriteDishonesty": false
+  },
+  "debriefPrompts": [
+    "我们先相信了哪些证据？什么改变了判断？",
+    "谁承担方案代价？谁的声音没有被听见？",
+    "我们怎样处理公众安全、能力范围、真实通报和承认错误？",
+    "下一次真实工程协作应改变哪个流程？"
+  ],
+  "readAloudPassages": [
+    {
+      "section": "03 / 第一幕：绿灯与海水",
+      "text": "The Shell hums above the Luminis Sea. Inside, maps flicker, water turbines spin, and somebody has left seven Swiss Army knives on the same table. Outside, your Maid-Mer guard drops an evil seagull beside the door. Then the alarm begins. The coastal pump station is flooding. Twelve maintenance workers are inside. On your screen, one message keeps blinking: GREEN — SAFE TO OPERATE."
+    },
+    {
+      "section": "03 / 第一幕：绿灯与海水",
+      "text": "The next storm surge will reach the station in twelve minutes. You have three action windows once your plan is ready. Your job is to open a rescue route, move the workers, and isolate the station safely. You also need to tell the other guilds what is actually happening. What do you do first?"
+    },
+    {
+      "section": "04 / 第二幕：三张卡，一幅真相",
+      "text": "The green light is a claim. The water on the floor is evidence. Tell me what you would verify, who can help, and what you will do if your first method fails."
+    },
+    {
+      "section": "05 / 第三幕：有压力的人，不同的利益",
+      "text": "I approved the temporary bypass. The low-load test passed, but I did not finish the surge test. If we abandon the station, we lose the spare motor. Could you sign the green status so the other guilds do not panic?"
+    },
+    {
+      "section": "05 / 第三幕：有压力的人，不同的利益",
+      "text": "I have an open channel to the other guilds. Give me three things: what you know, what you do not know, and what you need people to do. I can transmit a warning now and update it later."
+    },
+    {
+      "section": "05 / 第三幕：有压力的人，不同的利益",
+      "text": "Two workers need assisted movement. My backup power lasts twenty minutes. Give me the handover time and a named contact. Do not promise continuous power unless you have verified it."
+    },
+    {
+      "section": "05 / 第三幕：有压力的人，不同的利益",
+      "text": "The pump station is not verified for the current surge. Twelve workers are being evacuated. The Shell labs will go offline; clinic backup is active. Keep the coast clear. Mira will verify the isolation, and we will update you after the third action window."
+    },
+    {
+      "section": "07 / 第五幕：第一浪，建立通路",
+      "text": "The first wave hits the pump station. The green light stays green. A seagull lands on the alarm speaker and screams louder than the alarm. Your route must be ready before the next wave. Who is leading, and how is everyone helping?"
+    },
+    {
+      "section": "07 / 第五幕：第一浪，建立通路",
+      "text": "You can accept that consequence, or spend one emergency kit to improve this result by one step. You have no more than two kits for the entire rescue. What does the group choose?"
+    },
+    {
+      "section": "07 / 第五幕：第一浪，建立通路",
+      "text": "The route is usable. It may not be the route you wanted, but your people can now move. The twelve workers are waiting. Two need assistance, and the next wave is already turning the water white."
+    },
+    {
+      "section": "08 / 第二浪与第三浪",
+      "text": "You hear twelve voices through the radio. Some are calm. Some are talking over each other. Your plan needs a movement order, assistance for two workers, and a headcount at the receiving point. Who leads this part?"
+    },
+    {
+      "section": "08 / 第二浪与第三浪",
+      "text": "The local indicator is still live. The remote green light cannot confirm isolation. Mira is ready to help verify a manual shutdown. Tavi is holding the channel open. Tell us who checks the system, who checks the backup, and what you will report."
+    },
+    {
+      "section": "09 / 结局、变化与简版",
+      "text": "The last wave breaks against the cliffs. The Shell still stands. Now tell the guilds: how many people are accounted for, what remains unsafe, and who owns the next action. The story ends with that responsibility, not with the green light."
+    }
+  ]
+}

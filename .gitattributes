@@ -1,0 +1,15 @@
+* text=auto
+*.md text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.txt text eol=lf
+*.html text eol=lf
+*.pdf binary
+*.docx binary
+*.pptx binary
+*.woff binary
+
+# Preserve the archived OFL text, including its upstream trailing space.
+# The standalone flowchart includes the same license verbatim in an HTML comment.
+materials/scenario/draft-v1/*.txt whitespace=-blank-at-eol
+materials/scenario/draft-v1/*.html whitespace=-blank-at-eol

@@ -1,0 +1,36 @@
+# Local dependencies and environments
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Future web build output
+dist/
+build/
+.next/
+.nuxt/
+coverage/
+.cache/
+.parcel-cache/
+.vercel/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+.aws/
+
+# Editor, OS and Office temporary files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+~$*
+*.tmp
+*.log
+
+# Generated document previews
+tmp/
+previews/

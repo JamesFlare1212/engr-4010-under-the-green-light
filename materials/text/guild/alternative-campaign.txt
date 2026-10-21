@@ -1,0 +1,172 @@
+Guardians Guild: The Night of the Luminous Tide
+A D20 campaign module for the Guardian Guild, Heliora Prime. Built on the ENGR 4010 Game Rules & Mechanics.
+GM Quick Reference
+Premise. Our guild left The Shell (headquarters on the Luminis Sea cliffs) to prepare a landing site for the next ship of Nemorath refugees. The Guardians ask: what could go wrong, who could be harmed, and what safeguards make this trustworthy? Over five events, the guild must make a patch of Heliora Prime safe enough to receive thousands of people. The other guilds are present (Builders pouring foundations, Radiants running power, Linkers on comms, Sprouts and Vitalists surveying), but they only support. The Guardians make the decisions that matter.
+Bonuses (from the rules). Leadership Competency +3, Engineering Skill +2, Tool +1. A player can stack all three if they can justify each in the narration (maximum +6). The creative-action rule applies: a clever idea lowers the DC by 2 or earns a narrative perk even on a fail.
+Outcome ladder (every event uses this).
+Roll vs DC
+Result
+What happens
+DC +3 or more
+Success with a Boon
+Success plus a major benefit
+At DC to DC +2
+Near Success
+Succeed, with a close call
+1 or 2 below
+Near Miss
+Partial success with a complication or cost
+3 or 4 below
+Fail with a Twist
+Fails, but a minor benefit appears
+5 or more below
+Fail with Consequences
+Major complication that moves the story forward
+Natural 1
+Catastrophic
+Treat as Fail with Consequences and add one extra complication
+Readiness Score. Track the guild's Landing Readiness across the campaign. Boon = +3, Near Success = +2, Near Miss = +1, Twist = 0, Consequences = −1. The total decides the ending (see the end of this document).
+Suggested Guardian roles (adapt to your actual members; use whichever skills fit):
+Warden (Safety & Systems Engineer): risk assessment, protocols, GLP/PPE/IEEE standards.
+Bulwark (Civil/Structural Engineer): barriers, terrain, foundations.
+Seeker (Geologist/Environmental Scientist): terrain, ecosystems, hazards.
+Sentinel (Electrical/Comms Engineer): sensors, radar, defense grids.
+Mender (Biomedical/Chemical Engineer): triage, toxins, wellbeing of crew and refugees.
+Voice (the Leader): persuasion, de-escalation, command. Any player can use Leadership Competency (creativity, communication, emotional intelligence, cultural competency, collaboration, ethical judgment).
+
+Event 1: The Cliffside Road
+Read aloud. The convoy winds down a coastal road cut into the Luminis cliffs. Sea spray hits the glass. Below, the water glows faintly blue where microscopic life stirs against the black sand. The landing site is a wide plateau above the shore, flat and beautiful. Your sensors chirp. The plateau is sitting on something that is not entirely stone.
+The challenge. The Guardians must certify the plateau as safe to land a ship on. Years of rain have hollowed pockets beneath the surface, and the cliff edge is crumbling.
+Roll: Hazard Survey (Seeker or Bulwark leads; others can assist with tools or leadership). DC 13 (Good).
+Boon (16+): You map every void and find a vein of emeralds and a natural rock shelf that can anchor the landing pad. The Builders get a ready-made foundation, saving a full day. +1 Tool bonus to the next event.
+Near Success (13 to 15): The plateau is certified. A thin fissure near the north edge is flagged for monitoring.
+Near Miss (11 to 12): The plateau is usable but one third of it is condemned. The refugee ship will need a tighter approach, and the final event gets harder (DC +1).
+Twist (9 to 10): A section collapses into the sea while you scout. Nobody is hurt, and the falling rock exposes a fresh water seep. Drinkable water is a win, but you lost pad space.
+Consequences (8 or less): The ground gives way under a survey vehicle. Someone must be pulled from the sinkhole (the Mender and Warden must each pass a DC 10 check or take a wound that gives −1 to all rolls until treated). The delay costs two hours of daylight.
+
+Event 2: Storm Surge at the Shell
+Read aloud. Radar at The Shell begins to scream. A line of black cloud is racing across the Luminis Sea, faster than any model predicted. The tropical breeze turns hot and wet. Bad storms hit these islands and cause floods, and this one is heading straight at your half-built landing site. Builders are mid-pour. Refugee supplies sit in open crates.
+The challenge. The guild has about twenty minutes. They must choose how to respond: secure the site, evacuate the crews, or try both. Each approach uses a different roll. The group may split up.
+Roll A: Fortify the Site (Bulwark or Sentinel; use sandbags, flood barriers, or redirect runoff using the cliff waterfalls). DC 14 (Great).
+Roll B: Evacuate and Account for Everyone (Warden or Voice; this is communication and leadership under pressure). DC 11 (Good).
+Roll C (optional): Harness the Storm (Sentinel). Wind and water power The Shell's grid. Channel the surge into the turbines for a bonus charge. DC 16 (Great). If the group tries this and fails, add the Consequences result of Roll A.
+Result
+Fortify (Roll A)
+Evacuate (Roll B)
+Boon
+The site not only survives, the barriers hold with power to spare. The Radiants thank you, and the guild gains a Storm Barrier that gives +2 to all future flood or weather checks.
+Every crew member is accounted for with time to spare. A grateful Builder gives you their blueprint cache: +1 to the next Engineering roll.
+Near Success
+The barriers hold, but the site is waterlogged. Fixing it takes the night.
+All present and safe, though supplies are scattered.
+Near Miss
+A wall of water floods the lower pad. Half the supplies are ruined, so the refugees will arrive hungrier.
+Everyone is safe, but one worker is missing for a tense hour. Voice must pass a DC 9 to calm the crew.
+Twist
+The barrier fails, but the flood carves a channel that now naturally drains the site.
+A crew member is injured, but the Mender discovers the local fruit has anti-inflammatory properties.
+Consequences
+Floodwaters sweep the pad and carry off power cables. Lose one future Tool bonus.
+Someone is swept to sea. Start Event 3 with a rescue attempt (see below).
+Rescue Hook. If someone is swept to sea, Event 3 begins with a DC 12 rescue roll from any player, using a tool or Leadership Competency.
+
+Event 3: The Mermaid of the Glowing Shore
+Read aloud. The storm has passed. At dawn, the water glows pale blue against the black sand. A shape rises from the surf. Half fish, half human, it studies you with enormous silver eyes. Behind it, circling out in the deep, is the unmistakable fin of a megalodon. The creature raises a webbed hand. It is not attacking. It is asking something.
+The challenge. The Luminis Sea is not empty. Plesiosaur-mermaids are intelligent beings, and your landing zone sits on the shore they use for their nesting and rituals. Treating this as a threat could start a war. Treating it as an opportunity could give the refugees an ally. The Guardians must decide what "protection" means, for the refugees and for the beings already here.
+Roll: First Contact. Voice leads. Other players may help with cultural competency, ethical judgment, or tools such as sound translators or light signals. DC 15 (Great). Creative ideas that respect the mermaids' customs (mimicking their light patterns, offering a gift from the sea) lower the DC by 2.
+Boon (18+): The mermaid speaks in light and gesture. She shares that the megalodon is her kin's guardian and that a much larger storm-beast stirs in the deep. She offers a Pact of the Tide: her people warn you of danger, and the Guardians promise to keep the beach nesting grounds clear. Gain Tidewarden's Ally (+2 on Event 4 rolls).
+Near Success (15 to 17): Peaceful contact is made. The mermaid agrees to watch the landing but asks for something in return, such as no lights on the beach at night.
+Near Miss (13 to 14): The mermaid understands a different message than you intended. She interprets the landing lights as a challenge. She leaves, and the megalodon begins patrolling closer. Event 4 gets harder (boss gains +1 Resolve).
+Twist (11 to 12): The mermaid flees, but drops a glowing shell that acts as a beacon, which the Sentinel can decode to learn the beasts' migration patterns.
+Consequences (10 or less): Alarmed, the megalodon rams a survey boat. The crew is stranded, and the mermaids now see the Guardians as invaders. Event 4 begins with the boss already Enraged (see below), and future dealings with the sea beings start at DC +3.
+Role Moment. The Mender may roll DC 12 to notice the mermaid is injured (a wound from the storm). Treating her earns instant trust and +3 on the First Contact roll if done before Voice speaks.
+
+Event 4: Boss Battle: The Leviathan of the Luminous Tide
+Read aloud. The beacon has been lit and the landing is set for dusk. But as the sun sinks, the sea begins to glow brighter and brighter. Something enormous rises beneath the waves. A stingray-whale of impossible size surfaces, trailing a wake of living light. The jellyfish of the forest are bouncing in panic on the cliff. The Leviathan has been drawn by your landing beacon and, worse, by the tremors of the construction. Its glow is a hunting signal, and the megalodons are answering from every direction.
+The Boss. The Leviathan is not a villain. It is a hungry, frightened animal following the glow of its prey. The Guardians can defeat it, drive it off, or redirect it. Each is a different path, with different consequences.
+Boss Resolve: 6. Each successful roll reduces Resolve by 1 (a Boon reduces it by 2). The boss gets to act after each round. Fail results trigger a boss action (below). When Resolve reaches 0, the Leviathan breaks off.
+Each round, every player declares an action and rolls. Suggested actions and DCs:
+Role
+Action
+DC
+Warden
+Coordinate a defensive formation, assign evacuation of nearby crews
+12
+Bulwark
+Raise a barrier or redirect a waterfall to block the Leviathan's path
+14
+Sentinel
+Disrupt the beast's hunting sense with a counter-signal or sonic pulse
+15
+Seeker
+Spot a weakness or identify the glow's source (bacteria in the water)
+13
+Mender
+Sedate or soothe the creature using a chemical agent or scent
+16
+Voice
+Rally the guilds, or call on the mermaid ally
+12 (or 10 with the Pact of the Tide)
+Round outcomes (apply to each roll):
+Boon: Resolve −2, and the action creates a lasting advantage (choose from: the beast retreats peacefully, a barrier remains, or the glow shifts to a safe pattern).
+Near Success: Resolve −1.
+Near Miss: Resolve −1, but the player takes a minor setback (equipment damaged, −1 to next roll).
+Twist: No progress, but the Seeker learns the glow's cause (bacteria attracted by light), unlocking a DC 11 option to dim or redirect the lights.
+Consequences: The Leviathan strikes. Roll a d4 on the Boss Action Table.
+Boss Action Table (d4).
+Tidal Slam. A wave hits the site. All players roll DC 11 or lose a Tool bonus.
+Glow Flare. Blinding light. One player is dazed (−2 to next roll).
+Megalodon Pack. Smaller predators surge toward the crews. The Warden must pass DC 13 to protect them, or one crew is lost.
+Pull of the Deep. The creature drags a barrier into the sea. The landing pad loses 1 point of Readiness.
+Enraged State (if triggered in Event 3). The Leviathan acts twice per round, and Resolve is 8.
+Alternative Victory: The Gentle Way. If the players discover the glow is a hunting signal, they can turn off the lights and light a decoy beacon far down the coast. This requires a DC 14 Sentinel roll plus a DC 12 Voice roll to coordinate. Success ends the fight with no harm to anyone, and earns the Guardians the Respect of the Deep (+1 on all future sea-related rolls).
+Outcomes.
+Great Victory (Resolve reached 0 in 3 or fewer rounds, no casualties): The Leviathan turns and glides away. The mermaids sing. +3 Readiness.
+Hard-won Victory (4 to 6 rounds): The beast retreats, but the site is battered. +1 Readiness.
+Pyrrhic (Resolve not reduced in 6 rounds): The Guardians must abandon the beachfront pad. Refugees will land on the plateau, far from the water. −2 Readiness.
+
+Event 5: The Hidden Fault Line
+Read aloud. Silence falls after the battle. The Radiants report power is stable. The Linkers confirm the ship is entering the atmosphere. But the Shell's instruments show something troubling: the tremors are not the Leviathan's. A deep fault under the landing plateau is slowly shifting. And on the comm channel, an angry voice cuts through. A group of refugees on the ship, afraid and exhausted, are demanding to land now, with or without clearance.
+The challenge. Two problems collide: a physical threat (the unstable plateau) and a human one (panic and possible conflict). The Guardians are charged with protecting people, and also keeping the peace. The priority list says: make sure there is no civil war.
+Roll A: Stabilize the Plateau. Bulwark or Seeker leads. Use tools (seismic anchors, grout injection). DC 14 (Great).
+Roll B: Calm the Ship. Voice or Mender leads. This is emotional intelligence: empathy, social awareness, relationship management. DC 13 (Good).
+Roll C: Command the Landing. Warden coordinates the landing sequence while the other two rolls resolve. DC 12 (Good).
+All three rolls may be attempted. Add up the results to determine the ending.
+Result
+Stabilize
+Calm
+Landing
+Boon
+The plateau is rock-solid and the Builders add a safe zone.
+A refugee leader steps forward to work with the guilds. +1 on all rolls with refugees.
+A flawless landing.
+Near Success
+The ground holds for 24 hours.
+Order is restored, though tension remains.
+A smooth landing, a few minor injuries.
+Near Miss
+The fault holds, but with cracks. Part of the pad is unusable.
+The crowd quiets, but a rumor of a conflict spreads.
+Landing succeeds with a bumpy touchdown.
+Twist
+The plateau shifts but opens a mineral-rich cavern.
+Panic, but a young refugee volunteers information on Nemorath's final days.
+Landing delayed. Refugees stay aboard one more day.
+Consequences
+A section of the pad collapses. Rescue required.
+A faction on the ship breaks away. The first seeds of civil conflict.
+A hard landing. Mender must pass DC 12 to treat the wounded.
+
+Endings (Total Readiness Score)
+12 or more: The Shield Holds. The ship lands perfectly. The refugees step onto a secure, stable, calm Heliora Prime. The mermaids guard the sea, the Builders raise housing on the plateau, and the Guardians are honored as the guild who held the line without breaking it. Starting the next phase, your guild gets +2 on any roll involving defense, trust, or cooperation.
+8 to 11: The Bruised Dawn. The refugees land safely, but with scars: damaged supplies, a rumor, a wound. The Guardians prove themselves, though they know their work is far from done. Next phase, one complication carries over (the GM chooses one from your Near Miss or Twist results).
+4 to 7: The Fragile Peace. The landing succeeds, but barely. The plateau cracks, the sea beings are wary, and a faction among the refugees mistrusts the guilds. The Guardians must spend the next phase repairing trust and safety before anything else.
+3 or below: The Long Night. The refugees must be diverted to a backup site. People are hurt, trust is shaken, and the idea of civil war lingers. But the Guardians do not give up. They gain Hard Lessons (+3 on the next two rolls where a past failure is relevant), and the story continues.
+
+Optional Modifiers and GM Tips
+Rewarding creativity. If a player proposes something inventive, such as using the glowing bacteria as a warning light or luring the Leviathan with a decoy, lower the DC by 2 or grant a bonus even on a fail.
+Avoid "nothing happens." Every fail should reveal new information or open a new path.
+Use the world. Weave in the cliffs, waterfalls, jellyfish that go boing, and the bioluminescent sea. If the guild wants to send help to another region (the dust storms of the Eclipse River Basin, the mineral-rich Southern Reaches, the silica sands and oasis of Enofa Dunes), other guilds can mention it in passing, but nothing major happens off-screen.
+Role spotlight. Make sure each player gets at least one roll where their role is the best fit. A Mender should have a moment to heal, a Sentinel a moment to detect, a Bulwark a moment to build.
+Tie back to leadership. After each event, ask: Who did we protect? Who did we overlook? What would we do differently? This turns the dice into a reflection on emotional intelligence, ethical judgment, and collaboration.
+End of module. Roll for initiative.
