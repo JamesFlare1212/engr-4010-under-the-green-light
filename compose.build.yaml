@@ -1,0 +1,8 @@
+# 本机源码构建：docker compose -f compose.yaml -f compose.build.yaml up -d --build app
+services:
+  app:
+    image: green-light:local
+    build: .
+    pull_policy: build
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"

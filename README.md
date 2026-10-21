@@ -27,10 +27,18 @@ bun start
 ## Docker Compose
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-访问 `http://localhost:3000`。SQLite 保存在命名卷 `green-light-data`。可选将 `.env.example` 复制为 `.env`，设置 `APP_PORT` 和反向代理后的 `PUBLIC_ORIGIN`。HTTPS、备份、升级与单实例约束见 [部署说明](docs/DEPLOYMENT.md)。
+首次启动前，需将本次配置推送至 `main`，等待 GitHub Actions 成功发布镜像，并在 GitHub Packages 将该镜像设为 Public。之后每次推送 `main`，Actions 检查并发布 amd64 / arm64 镜像；Watchtower 默认每 60 秒检查并更新应用。PR 只验证构建。访问 `http://localhost:3000`，SQLite 保存在原命名卷 `green-light-data`。
+
+可选将 `.env.example` 复制为 `.env`，设置 `APP_PORT`、反向代理后的 `PUBLIC_ORIGIN`、`APP_IMAGE` 和检查间隔。服务器首次切换到此配置时，在原部署目录执行上述命令，保留原 Compose 项目名以复用数据卷。源码本机构建使用：
+
+```bash
+docker compose -f compose.yaml -f compose.build.yaml up -d --build app
+```
+
+此模式不自动更新应用。首次部署、HTTPS、备份、回滚与单实例约束见 [部署说明](docs/DEPLOYMENT.md)。
 
 ## 如何游玩
 

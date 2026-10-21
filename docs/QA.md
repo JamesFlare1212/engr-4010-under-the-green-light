@@ -41,6 +41,14 @@ HTTP 全流程测试用六位不同玩家依次主导三次准备和三次执行
 
 真实浏览器使用独立 GM / 玩家身份验证：全员投完显示等待 GM、玩家成功改选、GM 不填写可选说明即可结束、最终只统计修改后的选项并锁定按钮；390×844 的 GM 结束按钮可操作且无页面水平溢出。
 
+## Watchtower 自动部署配置验证
+
+- 使用临时下载的 Docker 官方独立 Compose 5.6.1 校验 `compose.yaml` 及叠加 `compose.build.yaml` 的配置，均通过；不需要 Docker Engine。
+- 检查渲染后的配置：生产镜像无本地 build、应用 enable 标签和 Watchtower scope 一致、默认 60 秒检查、Docker socket 挂载、原 SQLite 卷保留；源码构建切换为本地镜像并关闭自动更新；自定义镜像、端口、检查间隔和项目范围覆盖均通过。
+- actionlint 1.7.12 校验 `.github/workflows/publish-image.yaml`，语法与表达式通过。
+- 应用类型检查 0 错误 / 0 警告；当前工作区 57 项测试全部通过；生产构建通过。首次沙箱测试因监听本机端口返回 `EPERM`，允许本机测试服务运行后重跑通过。
+- 已只读确认远程仓库公开、默认分支为 `main`；未推送提交、运行远程 Actions 或修改 GHCR 包可见性。没有 Docker Engine，未验证真实多架构镜像构建、首次容器启动或 Watchtower 更新与持久化恢复。
+
 ## 验证边界
 
 来源校验后续回归：先用真实 Vite 代理复现无 `Sec-Fetch-Site` 请求返回 403，再将 `/api` 字符串简写替换为 `changeOrigin: false` 的对象配置，并对 WebSocket 显式保留 Host / Origin。localhost、IPv4 / IPv6 局域网的创建、加入和实时认证通过；错误来源和无效 Origin 继续返回 403。服务端不再依赖 Fetch Metadata 放行，因此兼容局域网 HTTP 和不提供该头的浏览器。修改 Vite 配置后需重启开发服务；已有房间与数据库无需清理。
