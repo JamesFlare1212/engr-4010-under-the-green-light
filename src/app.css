@@ -62,6 +62,7 @@ h3{font-size:18px;font-weight:650}
 h4{font-size:16px;font-weight:650}
 small{font-size:12px}
 svg{flex-shrink:0}
+.fa-icon{display:inline-block;vertical-align:-.125em;overflow:visible}
 button svg{pointer-events:none}
 .muted{color:var(--muted)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
@@ -140,7 +141,6 @@ input.code-input{font-size:31px;letter-spacing:.5em;text-align:center;padding:13
 .choice strong{font-size:13px;font-weight:650}
 .choice small{font-size:10px;line-height:1.65;color:var(--muted)}
 .choice>span{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
-.choice .physical-die{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:1.8px solid currentColor;border-radius:4px;font-size:10px;font-weight:700;color:var(--ink)}
 .setup-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
 .setup-summary span{background:var(--badge);color:var(--muted);font-size:11px;padding:6px 9px;border-radius:4px}
 .rule-note{display:flex;align-items:flex-start;gap:10px;background:var(--soft);padding:13px;border-radius:7px;margin-top:21px}
@@ -395,10 +395,8 @@ legend{margin-bottom:11px}
 .result-panel.result-success{border-color:var(--border-hover);background:var(--selected)}
 .result-main{display:flex;align-items:center;gap:22px}
 .result-die{position:relative;width:72px;height:80px;flex-shrink:0;color:var(--muted);transform-origin:center}
-.result-die svg{position:absolute;inset:0;width:100%;height:100%}
-.result-die svg path{stroke:currentColor;stroke-width:1.8}
-.result-die svg path+path{stroke-width:.7;opacity:.5}
-.result-die strong{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:500;color:var(--green);padding-top:4px}
+.result-die .fa-icon{position:absolute;inset:0 auto auto 0;opacity:.65;transform-origin:center}
+.result-die strong{position:absolute;right:0;bottom:0;min-width:40px;height:40px;display:flex;align-items:center;justify-content:center;padding:0 6px;font-size:25px;font-weight:600;line-height:1;color:var(--green);background:var(--surface);border:1px solid var(--border-hover);border-radius:10px}
 .result-main .tiny-tag{font-size:9px;color:var(--muted)}
 .result-main h3{font-size:23px;font-family:Georgia,'Songti SC','Noto Sans SC Variable',serif;color:var(--muted);margin-top:6px;font-weight:500}
 .roll-equation{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px}
@@ -520,12 +518,13 @@ dialog::backdrop{background:#102e39a8;backdrop-filter:blur(3px)}
 .toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);z-index:100;background:#153e49;color:#e1ebde;padding:16px 17px;border:1px solid #72957f;border-radius:9px;display:flex;gap:10px;align-items:center;max-width:calc(100% - 32px);width:max-content;box-shadow:0 8px 30px #14313a30;font-size:12px;line-height:1.7}
 .toast>span{max-width:520px}
 .toast>button{display:flex;align-items:center;justify-content:center;background:none;color:#9ebba4;border:0;width:32px;height:32px;margin-left:5px;flex-shrink:0}
-@keyframes dice-roll{0%{transform:rotate(0) scale(.8)}
-25%{transform:rotate(120deg) scale(1.05)}
-65%{transform:rotate(260deg) scale(.9)}
+@keyframes dice-roll{0%{transform:rotate(-30deg) scale(.85)}
+55%{transform:rotate(180deg) scale(1.05)}
 100%{transform:rotate(360deg) scale(1)}
 }
-.rolling{animation:dice-roll .9s cubic-bezier(.2,.7,.3,1)}
+.result-die.rolling>.fa-icon{animation:dice-roll .7s cubic-bezier(.2,.7,.3,1)}
+@keyframes icon-spin{to{transform:rotate(360deg)}}
+.icon-spin{animation:icon-spin 1s linear infinite;transform-origin:center}
 
 @media(min-width:1700px){.room-layout{grid-template-columns:250px minmax(0,1fr) 275px}
 .room-main{padding-top:50px}

@@ -54,6 +54,8 @@ This mode does not update the app automatically. See the [deployment guide](docs
 
 Appearance follows the browser's light or dark preference and updates immediately when it changes. Each device also follows its browser's preferred supported language (English or Chinese; otherwise English). Browser language changes update the interface immediately. The language button provides a temporary override until the next browser language change or page reload; older saved language choices no longer override the browser.
 
+Interface icons use locally bundled Font Awesome Free solid SVGs, imported individually through `src/components/Icon.svelte`. The brand mark and favicon use its shield-heart icon. Virtual rolls animate the D20 icon for 700 ms while the result stays still; connection spinners appear only while connecting. Reduced-motion preferences disable animations. Attribution and license: [Font Awesome Free](public/licenses/Font-Awesome-Free.txt).
+
 Both languages synchronize through the same content IDs. Custom plans, notes, statements, and reflections retain their original input language. Players do not receive private GM context or notes. Classroom timing is tracked separately from the story's twelve-minute window.
 
 ## Synchronization and recovery

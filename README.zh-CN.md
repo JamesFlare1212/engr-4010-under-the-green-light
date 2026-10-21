@@ -54,6 +54,8 @@ docker compose -f compose.yaml -f compose.build.yaml up -d --build app
 
 明暗主题自动跟随浏览器偏好，并在偏好变化时即时更新。语言按每台设备的浏览器首选顺序匹配中英文，均不匹配时使用英文；浏览器语言变化时，界面立即同步。语言按钮仍可临时切换，直到浏览器语言再次改变或刷新页面；旧版保存的语言选择不再覆盖浏览器设置。
 
+界面图标统一使用 Font Awesome Free 实心 SVG，按图标导入并随应用本地打包，由 `src/components/Icon.svelte` 渲染；品牌标记与 favicon 使用其中的 shield-heart。虚拟掷骰仅让 D20 图形旋转 700 毫秒，结果点数保持静止；连接中的状态图标才持续旋转。系统启用减少动态效果时关闭动画。署名与许可证见 [Font Awesome Free](public/licenses/Font-Awesome-Free.txt)。
+
 中英文通过同一组 ID 同步。自定义方案、笔记、通报和反思保留输入原文。玩家不会收到主持私密上下文与笔记。课堂计时与故事的十二分钟分别处理。
 
 ## 同步与恢复

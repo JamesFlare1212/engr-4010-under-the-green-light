@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Languages, X, AlertCircle } from 'lucide-svelte';
+  import Icon from './components/Icon.svelte';
+  import { faCircleExclamation, faLanguage, faXmark } from '@fortawesome/free-solid-svg-icons';
   import { locale, syncBrowserLocale } from './lib/i18n';
   import { room, session, notice, resume, disconnect } from './lib/client';
   import Brand from './components/Brand.svelte';
@@ -18,6 +19,6 @@
 {#if $room}
   <Room game={$room} />
 {:else}
-  <div class="landing"><header class="landing-header"><Brand /><div class="header-end"><span class="guild-tag">{$locale === 'zh-CN' ? '一次关于证据与责任的冒险' : 'A story of evidence & responsibility'}</span><button class="lang-btn" onclick={() => locale.set($locale === 'zh-CN' ? 'en' : 'zh-CN')}><Languages size={16} />{$locale === 'zh-CN' ? 'EN' : '中文'}</button></div></header><Home {joinCode} /><footer class="landing-footer"><span>ENGR 4010 · Guardians Guild</span><span>{$locale === 'zh-CN' ? '在不确定中，照顾彼此。' : 'Look after each other, through uncertainty.'}</span></footer></div>
+  <div class="landing"><header class="landing-header"><Brand /><div class="header-end"><span class="guild-tag">{$locale === 'zh-CN' ? '一次关于证据与责任的冒险' : 'A story of evidence & responsibility'}</span><button class="lang-btn" onclick={() => locale.set($locale === 'zh-CN' ? 'en' : 'zh-CN')}><Icon icon={faLanguage} size={16} />{$locale === 'zh-CN' ? 'EN' : '中文'}</button></div></header><Home {joinCode} /><footer class="landing-footer"><span>ENGR 4010 · Guardians Guild</span><span>{$locale === 'zh-CN' ? '在不确定中，照顾彼此。' : 'Look after each other, through uncertainty.'}</span></footer></div>
 {/if}
-{#if $notice}<div class="toast" role="status"><AlertCircle size={19} /><span>{$notice[$locale]}</span><button aria-label={$locale === 'zh-CN' ? '关闭提示' : 'Dismiss message'} onclick={() => notice.set(null)}><X size={17} /></button></div>{/if}
+{#if $notice}<div class="toast" role="status"><Icon icon={faCircleExclamation} size={19} /><span>{$notice[$locale]}</span><button aria-label={$locale === 'zh-CN' ? '关闭提示' : 'Dismiss message'} onclick={() => notice.set(null)}><Icon icon={faXmark} size={17} /></button></div>{/if}
