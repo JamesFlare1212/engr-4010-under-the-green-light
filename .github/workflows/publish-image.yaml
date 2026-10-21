@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    # 手动发布只允许 main，避免其他分支覆盖生产 latest。
+    # Allow manual publishing only from main so other branches cannot overwrite production latest.
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -48,7 +48,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Dockerfile 内执行类型检查、测试、生产构建；全部成功后才推送镜像。
+      # The Dockerfile runs type checks, tests, and a production build before publishing the image.
       - name: Build, verify and publish
         uses: docker/build-push-action@v7
         with:
