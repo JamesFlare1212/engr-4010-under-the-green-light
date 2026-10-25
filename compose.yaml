@@ -25,7 +25,7 @@ services:
       - no-new-privileges:true
 
   watchtower:
-    image: nickfedor/watchtower:1.23.1
+    image: nickfedor/watchtower:1.23.2
     environment:
       WATCHTOWER_LABEL_ENABLE: "true"
       WATCHTOWER_SCOPE: ${COMPOSE_PROJECT_NAME:-engr-4010-under-the-green-light}
