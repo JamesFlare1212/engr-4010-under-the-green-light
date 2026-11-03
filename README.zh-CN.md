@@ -10,6 +10,8 @@
 
 使用 Bun 1.4.2，依赖由 `bun.lock` 固定。
 
+前端库在构建时打包，归入开发依赖；生产服务端仅安装 Zod，HTTP、WebSocket 和 SQLite 使用 Bun 内置支持。
+
 ```bash
 bun install --frozen-lockfile
 bun run dev
@@ -76,7 +78,7 @@ bun run verify
 
 测试覆盖规则、资源幂等、权限、投票保密、SQLite 重启、HTTP 完整游玩与真实 WebSocket 断开重连。[验证记录](docs/QA.md) 区分自动测试、浏览器检查和未执行的环境检查。
 
-## 目录与材料
+## 目录与开发参考
 
 ```text
 src/                         Svelte 界面、语言切换、浏览器同步
@@ -84,24 +86,12 @@ shared/                      公共双语剧本、协议类型、结果展示
 server/                      Bun 服务、状态机、SQLite、GM 私密上下文
 tests/                       规则、存档、权限、协议与联机测试
 public/                      精选公开资源与字体许可证
-content/scenario.zh-CN.json   原开发种子，保持原草案边界
-docs/                        世界背景、规则交接、实现与部署说明
-materials/                   参考原件与原剧本草案，不进入运行镜像或公开资源
-tools/                       文档工具与开发启动脚本
+content/scenario.zh-CN.json   结构化剧情参考，供内容回归测试使用
+docs/                        架构、规则、剧情、部署与验证说明
+docs/scenario/               可读 GM 剧本与英文玩家手册
+tools/dev.ts                 开发服务启动脚本
 ```
 
-网页双语改编为 `shared/content.ts` 的 1.0.0 版本；原 Word、玩家包、流程图和开发种子保持原样。改编映射见 [决定记录](docs/DECISIONS.md)。
+线上双语剧情为 `shared/content.ts` 的 1.0.0 版本，GM 私密内容在 `server/private-content.ts`。[GM 剧本](docs/scenario/gm-script.md)、[英文玩家手册](docs/scenario/player-packet.md) 和结构化剧情参考用于开发。剧本保留原场次的主持安排，与线上玩法的差异见 [决定记录](docs/DECISIONS.md)。这些参考资料不进入公开资源或运行镜像。
 
-参考 [项目说明](docs/PROJECT_BRIEF.md)、[世界与课程](docs/WORLD_AND_COURSE.md)、[开发交接](docs/DEVELOPMENT_HANDOFF.md)、[来源与使用范围](docs/SOURCES.md)。课程规则、世界既有设定、本剧本虚构事实与场次约定分别记录；游戏不会生成伦理总分或课程成绩。
-
-文档维护仍使用 `requirements-docs.txt`：
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements-docs.txt
-python tools/extract_materials.py
-python tools/build_documents.py --output /tmp/under-the-green-light-docs
-```
-
-`build_documents.py` 再现原作者草案，不会读回后续人工 Word 修改；默认生成到临时目录。
+参考 [剧情与世界](docs/SCENARIO.md)、[开发交接](docs/DEVELOPMENT_HANDOFF.md)、[来源与许可](docs/SOURCES.md)。课程规则、世界既有设定、本剧本虚构事实与场次约定分别记录；游戏不会生成伦理总分或课程成绩。开发仅需 Bun，无需 Python 或 Office 工具链。

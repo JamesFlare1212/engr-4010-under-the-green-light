@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IconDefinition } from '@fortawesome/fontawesome-common-types';
+  import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 
   let { icon, size = 24, spin = false }: { icon: IconDefinition; size?: number; spin?: boolean } = $props();
   const paths = $derived(typeof icon.icon[4] === 'string' ? [icon.icon[4]] : icon.icon[4]);

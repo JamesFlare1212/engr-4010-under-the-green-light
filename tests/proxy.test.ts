@@ -3,11 +3,14 @@ import { createServer } from 'vite';
 import config from '../vite.config';
 import { createApp } from '../server/index';
 import type { RoomView } from '../shared/types';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 
 const cleanup: (() => unknown)[] = [];
 afterEach(async () => { while (cleanup.length) await cleanup.pop()!(); });
 
-async function fixture() {
+async function fixture(root?: string) {
   const backend = createApp({ db: ':memory:', hostname: '127.0.0.1', port: 0 });
   cleanup.push(backend.stop);
   const target = `http://127.0.0.1:${backend.server.port}`;
@@ -16,8 +19,8 @@ async function fixture() {
     path, typeof options === 'string' ? target : { ...options, target: path === '/ws' ? target.replace('http:', 'ws:') : target }
   ]));
   const vite = await createServer({
-    configFile: false, logLevel: 'silent',
-    server: { host: '127.0.0.1', port: 0, hmr: false, watch: null, proxy }
+    configFile: false, logLevel: 'silent', root,
+    server: { host: '127.0.0.1', port: 0, hmr: false, watch: null, fs: config.server!.fs, proxy }
   });
   cleanup.push(() => vite.close());
   await vite.listen();
@@ -34,6 +37,31 @@ async function fixture() {
   }
   return { base, port: address.port, post };
 }
+
+test('development references: Vite blocks GM scripts and scenario seeds, including raw and filesystem URLs', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'green-light-vite-private-'));
+  cleanup.push(() => rmSync(root, { recursive: true, force: true }));
+  const references = ['docs/scenario/gm-script.md', 'docs/scenario/player-packet.md', 'content/scenario.zh-CN.json'];
+  for (const reference of references) {
+    const path = join(root, reference);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, 'PRIVATE SCENARIO REFERENCE');
+  }
+  mkdirSync(join(root, 'public'));
+  writeFileSync(join(root, 'public', 'game.txt'), 'Public game asset');
+  const f = await fixture(root);
+  const asset = await fetch(`${f.base}/game.txt`);
+  expect(asset.status).toBe(200);
+  expect(await asset.text()).toBe('Public game asset');
+  for (const reference of references) {
+    const absolute = join(root, reference).replaceAll('\\', '/');
+    for (const path of [`/${reference}`, `/${reference}?raw`, `/@fs/${absolute}`, `/@fs/${absolute}?raw`]) {
+      const response = await fetch(`${f.base}${path}`);
+      expect(response.status).toBe(403);
+      expect(await response.text()).not.toContain('PRIVATE SCENARIO REFERENCE');
+    }
+  }
+});
 
 test('real Vite proxy: localhost and LAN requests can create and join rooms without Fetch Metadata', async () => {
   const f = await fixture();

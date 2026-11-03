@@ -1,19 +1,10 @@
 # Local dependencies and environments
 node_modules/
-.venv/
-venv/
-__pycache__/
-*.py[cod]
 
-# Future web build output
+# Build and test output
 dist/
-build/
-.next/
-.nuxt/
 coverage/
-.cache/
-.parcel-cache/
-.vercel/
+.vite/
 
 # Local configuration and credentials
 .env
@@ -21,22 +12,20 @@ coverage/
 !.env.example
 .aws/
 
-# Editor, OS and Office temporary files
+# Editor and OS temporary files
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
-~$*
 *.tmp
 *.log
 
-# Generated document previews
+# Temporary work
 tmp/
 previews/
 
-# Web runtime / Vite
-.vite/
+# Runtime data and backups
 data/
 backups/
 *.sqlite

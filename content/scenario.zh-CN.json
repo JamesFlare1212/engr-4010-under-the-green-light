@@ -6,19 +6,12 @@
     "zh-CN": "绿灯之下",
     "en": "Under the Green Light"
   },
-  "status": "development-seed-not-an-implemented-game",
-  "contentNote": "Structured adaptation of the authored draft, not an official course rules publication. Longer narration is in the GM/player texts. Reconcile edits manually.",
-  "sourceIds": [
-    "course-syllabus",
-    "course-rules",
-    "course-nspe",
-    "course-class6",
-    "guild-headquarters",
-    "guild-mission",
-    "guild-first-gm",
-    "guild-priorities",
-    "scenario-gm",
-    "scenario-player"
+  "status": "development-reference",
+  "contentNote": "Structured reference for the original scenario, not an official course rules publication. Runtime content lives in shared/content.ts and server/private-content.ts; narration is in docs/scenario/. Reconcile edits manually.",
+  "referenceFiles": [
+    "docs/SCENARIO.md",
+    "docs/scenario/gm-script.md",
+    "docs/scenario/player-packet.md"
   ],
   "party": {
     "coGMs": 2,
@@ -95,7 +88,7 @@
           "value": 3
         }
       ],
-      "sourceId": "course-rules"
+      "sourceNote": "Course D20 foundation; scenario conventions are recorded separately in docs/DECISIONS.md."
     },
     "draftConventions": {
       "bonusPolicy": "choose-one-relevant",

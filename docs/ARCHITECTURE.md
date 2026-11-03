@@ -4,6 +4,8 @@
 
 前端为 Svelte 5 单页应用，Vite 构建与 Tailwind CSS。Bun 提供 HTTP、WebSocket 和构建后的静态资源；`bun:sqlite` 存储场次、凭证摘要和命令去重记录。
 
+运行依赖仅为 Zod。Svelte、二维码、图标和字体与构建 / 类型检查工具一起列为开发依赖，构建后通过 `dist` 提供给浏览器。Docker 运行阶段使用 `bun install --frozen-lockfile --production`，不安装前端或开发工具。
+
 一个服务实例对应一个 SQLite 数据库。在线连接表保存在进程内，不能将多个独立实例挂到同一个数据库后当作可水平扩展服务。扩容应先引入共享广播及房间所有权机制。
 
 ## 显式阶段
@@ -46,7 +48,7 @@ GM 保留推进、断线处理、平票裁决、自创方案、叙事调整与�
 
 命令和去重记录写入同一个 SQLite 事务。相同成员的相同命令 ID 重试只返回当前快照。GM 写操作校验 `revision`，冲突 `409` 包含最新投影。投票、申请、掷骰绑定具体 ID 和状态，接受同时提交；重复掷骰仍被状态机拒绝。交接报告由全部已加入成员（GM、玩家、观察者）共同编辑，所有人都可生成事实草稿、保存未完成内容。报告和私密笔记编辑保留起始版本，过期保存返回冲突，防止覆盖其他成员的更新。交接完整性仍由进入复盘时的检查保证。
 
-Zod 验证输入，HTTP 最大 1 MB，WebSocket 消息最大 4 KB；创建、加入和命令分别限流。生产只读取 `dist`；开发 Vite 拒绝访问服务端私密模块、课程材料、数据库、原始内容种子和环境文件。
+Zod 验证输入，HTTP 最大 1 MB，WebSocket 消息最大 4 KB；创建、加入和命令分别限流。生产只读取 `dist`；开发 Vite 拒绝访问服务端私密模块、开发文档、数据库、剧情参考和环境文件。
 
 开发 HTTP / WebSocket 代理显式保留 Host 和 Origin（`changeOrigin: false`），服务端比较实际来源和请求地址，不依赖局域网 HTTP 可能缺少的 `Sec-Fetch-Site`。不能把 `/api` 改成 Vite 字符串代理简写，该简写会重写 Host。反向代理若改写地址，需配置 `PUBLIC_ORIGIN`。
 
@@ -58,8 +60,8 @@ Zod 验证输入，HTTP 最大 1 MB，WebSocket 消息最大 4 KB；创建、加
 
 浏览器最后快照只用于阅读，不作为结算依据。局域网 HTTP 缺少 `crypto.randomUUID` 时用 `getRandomValues` 生成 UUID v4。本版没有 Service Worker，不承诺断网后首次加载；已经打开的页面可继续阅读。
 
-## 存档与材料
+## 存档与剧情
 
 `schemaVersion=1`，应用剧本 `scenarioVersion=1.0.0`，导出 `green-light-save` v1。导入检查版本、类型、目标唯一性、算式与资源一致性。新房间保留行动和报告，但不继承旧登录权限。GM 应将不再参与的历史成员设为观察者，重新开放未完成申请或路线投票，让新成员参与。
 
-中英内容在 `shared/content.ts` 成对定义。玩家端不导入原开发种子或 GM 私密模块。原始课程、公会材料和 Word 草案不进入运行镜像。参考流程图的 HTML、字体嵌入与绘图代码未作为应用架构。中文字体由 Fontsource 自托管，许可证在 `public/licenses/`。
+中英内容在 `shared/content.ts` 成对定义，GM 私密提示在 `server/private-content.ts`。`docs/scenario/` 的剧本与 `content/scenario.zh-CN.json` 是开发参考，不被玩家端导入，也不进入运行镜像。内容边界见 [剧情与世界](SCENARIO.md) 和 [决定记录](DECISIONS.md)。中文字体由 Fontsource 自托管，图标使用 Font Awesome Free，许可证在 `public/licenses/`。

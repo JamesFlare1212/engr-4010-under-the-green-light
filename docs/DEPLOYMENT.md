@@ -29,7 +29,7 @@ docker compose logs -f app watchtower
 
 后续推送 `main` 时，构建发布完成后通常在下一次检查（默认 60 秒）开始更新，另需镜像下载与重启时间。`.env` 中的 `WATCHTOWER_POLL_INTERVAL` 单位为秒，修改后运行 `docker compose up -d` 应用配置。更新期间 WebSocket 短暂断开，客户端恢复后从 SQLite 继续；没有零停机或健康检查失败后的自动回滚保证。构建失败不会发布新的 `latest`。
 
-使用维护中的 [nickfedor/watchtower 1.23.1](https://github.com/nicholas-fedor/watchtower/releases/tag/v1.23.1)；原 [containrrr/watchtower](https://github.com/containrrr/watchtower) 已归档。通过 enable 标签与 scope 限制为当前项目的应用容器，Watchtower 自身不自动更新。多套部署应在 `.env` 设置不同的 `COMPOSE_PROJECT_NAME`，并保持每套已有数据卷所属的项目名。Docker socket 挂载赋予 Watchtower 管理宿主机容器的权限，因此仅在可信 Docker 主机部署，不开放远程 Docker API。
+使用维护中的 [nickfedor/watchtower 1.23.2](https://github.com/nicholas-fedor/watchtower/releases/tag/v1.23.2)；原 [containrrr/watchtower](https://github.com/containrrr/watchtower) 已归档。通过 enable 标签与 scope 限制为当前项目的应用容器，Watchtower 自身不自动更新。多套部署应在 `.env` 设置不同的 `COMPOSE_PROJECT_NAME`，并保持每套已有数据卷所属的项目名。Docker socket 挂载赋予 Watchtower 管理宿主机容器的权限，因此仅在可信 Docker 主机部署，不开放远程 Docker API。
 
 Watchtower 更新应用镜像并复用现有容器配置。它不会拉取服务器上的 Git 工作区，也不会应用 Compose、端口、环境变量或 Watchtower 版本变更；这些配置修改需在服务器拉取仓库后重新执行 `docker compose up -d`。本配置保留旧镜像，便于手工回滚，不执行全局镜像清理。
 

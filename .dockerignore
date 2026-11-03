@@ -9,12 +9,9 @@ dist
 data
 backups
 .vite
-.venv
-materials
 docs
 tmp
 previews
 coverage
 *.log
 *.sqlite*
-__pycache__

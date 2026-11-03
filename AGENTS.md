@@ -1,24 +1,22 @@
 # Developer handoff
 
-仓库现已包含 Bun / Svelte / SQLite 联机应用；运行、验证与部署从 README 开始。原课程材料、Word 草案与开发种子保持来源版本，应用改编和私密内容分别放在 shared/ 与 server/。
+仓库维护 Bun / Svelte / SQLite 联机游戏；运行、验证与部署从 README 开始。公共剧情在 shared/，GM 私密内容在 server/，可读剧本与开发参考在 docs/ 和 content/。
 
 ## Read first
 
 1. `README.md`
-2. `docs/PROJECT_BRIEF.md`
-3. `docs/WORLD_AND_COURSE.md`
-4. `docs/DEVELOPMENT_HANDOFF.md`
-5. `content/scenario.zh-CN.json`
+2. `docs/ARCHITECTURE.md`
+3. `docs/DEVELOPMENT_HANDOFF.md`
+4. `docs/SCENARIO.md`
+5. `docs/DECISIONS.md`
 
 ## Working conventions
 
 - Use Chinese for project discussions and handoff prose; preserve English read-aloud dialogue and player-facing terms where supplied.
-- Treat `materials/**/originals/` as reference originals. Store subsequent adaptations as separate versions.
 - Distinguish course rules, the Guardians' world canon, this scenario's fiction, and proposed session conventions. `docs/DECISIONS.md` records that boundary.
-- Do not copy the entire materials directory into publicly served application assets. Select game content deliberately; course handouts and student work retain their original ownership.
-- The flowchart HTML is a standalone reference, not the application's architecture or a selected UI framework.
+- Select public game content deliberately. Keep GM scripts and development references out of public assets and runtime images; keep server modules and credentials out of client bundles.
 - For gameplay implementation, begin with explicit state transitions and rule behavior in `docs/DEVELOPMENT_HANDOFF.md`. Let the GM enter or adjust fictional outcomes and choose custom routes.
 - Keep important evidence accessible after failed checks. Track people, isolation and truthfulness separately. Do not infer ethical quality or course grades from dice totals.
-- Material tools use `requirements-docs.txt`. Application dependencies, build commands and meaningful tests should be documented when an application is created.
-- When editing scenario content, reconcile JSON, GM/player texts and diagrams intentionally. The current JSON is a development seed, not an automated rendering of the Word files.
-- `tools/build_documents.py` reproduces the authored draft. It does not import later manual Word edits. Generate to a temporary directory unless intentionally replacing the draft.
+- Keep dependencies scoped to the game and its build, checks and tests. Document commands in README; the project does not require Python or Office tooling.
+- When editing scenario content, reconcile `shared/content.ts`, `server/private-content.ts`, GM/player references in `docs/scenario/` and `content/scenario.zh-CN.json` intentionally. Runtime behavior follows the implemented state machine; reference scripts retain their original session conventions where documented.
+- Preserve English read-aloud dialogue and stable evidence, NPC, route and objective IDs. Verify changes with `bun run check`, `bun test tests` and `bun run build`.

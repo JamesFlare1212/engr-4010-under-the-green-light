@@ -10,6 +10,8 @@ Twelve maintenance workers are trapped in a tidal pump station outside The Shell
 
 Use Bun 1.4.2. Dependencies are pinned in `bun.lock`.
 
+Frontend libraries are bundled during the build and listed with development dependencies. The production server only installs Zod and uses Bun's built-in HTTP, WebSocket, and SQLite support.
+
 ```bash
 bun install --frozen-lockfile
 bun run dev
@@ -76,7 +78,7 @@ bun run verify
 
 Tests cover rules, idempotent resource use, permissions, ballot secrecy, SQLite restarts, complete playthroughs over HTTP, and real WebSocket disconnection and reconnection. The [QA record](docs/QA.md) (Chinese) distinguishes automated tests, browser checks, and environment checks that have not been performed.
 
-## Repository layout and materials
+## Repository layout and development references
 
 ```text
 src/                         Svelte UI, language switching, browser synchronization
@@ -84,24 +86,12 @@ shared/                      Public bilingual scenario, protocol types, outcome 
 server/                      Bun server, state machine, SQLite, private GM context
 tests/                       Rules, persistence, permissions, protocol, multiplayer tests
 public/                      Selected public assets and font licenses
-content/scenario.zh-CN.json   Original development seed, preserving the draft's scope
-docs/                        World background, rules handoff, implementation and deployment guides
-materials/                   Reference originals and scenario drafts; excluded from runtime images and public assets
-tools/                       Document tools and development startup scripts
+content/scenario.zh-CN.json   Structured scenario reference used by content regression tests
+docs/                        Architecture, rules, scenario, deployment and validation guides
+docs/scenario/               Readable GM script and English player packet
+tools/dev.ts                 Development server startup
 ```
 
-The bilingual web adaptation is version 1.0.0 in `shared/content.ts`. The original Word files, player packet, flowchart, and development seed are preserved. See the adaptation mapping in the [decision log](docs/DECISIONS.md) (Chinese).
+The bilingual game content is version 1.0.0 in `shared/content.ts`; GM-only context is in `server/private-content.ts`. The [GM script](docs/scenario/gm-script.md), [English player packet](docs/scenario/player-packet.md), and structured scenario reference support development. The scripts describe the original session; [adaptation decisions](docs/DECISIONS.md) explain differences in the online game. These references are excluded from public assets and runtime images.
 
-Further documentation is currently in Chinese: [project brief](docs/PROJECT_BRIEF.md), [world and course background](docs/WORLD_AND_COURSE.md), [development handoff](docs/DEVELOPMENT_HANDOFF.md), and [sources and usage scope](docs/SOURCES.md). Course rules, established world canon, this scenario's fictional facts, and session conventions are recorded separately. The game does not generate an aggregate ethics score or course grade.
-
-Document maintenance uses `requirements-docs.txt`:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements-docs.txt
-python tools/extract_materials.py
-python tools/build_documents.py --output /tmp/under-the-green-light-docs
-```
-
-`build_documents.py` reproduces the authored draft and does not import later manual Word edits. Its default output location is a temporary directory.
+Further documentation is currently in Chinese: [scenario and world](docs/SCENARIO.md), [development handoff](docs/DEVELOPMENT_HANDOFF.md), and [sources and licenses](docs/SOURCES.md). Course rules, established world canon, this scenario's fictional facts, and session conventions are recorded separately. The game does not generate an aggregate ethics score or course grade. Development requires Bun; there is no Python or Office toolchain.

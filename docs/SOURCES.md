@@ -1,43 +1,17 @@
-# 来源与材料性质
+# 来源与许可
 
-## 收录范围
+## 剧情参考
 
-材料来自当前 Guardians 工作目录，以及此前在已登录 RPI LMS 课程页读取并下载的课程附件。原始文件复制到本仓库，原目录保持不变。`materials/catalog.json` 给出每份材料的标题、归类、可搜索文本路径、来源位置及SHA-256。
+《绿灯之下》在 ENGR 4010 Lead RPG 的 Guardians 世界背景上进行原创改编。The Shell、Luminis Sea、Nemorath、Heliora Prime、公会使命、恶海鸥和 Maid-Mer 来自此前课程与小组设定；泵站、十二名维修人员、三名 NPC、路线代价和具体保障数值属于本事件的虚构设计。
 
-没有收录同学个人反馈表、报名照片、Office临时文件、浏览器用户数据、登录Cookie或下载签名链接。组内原件仍可能含原作者姓名、角色姓名和讨论记录；它们是本地背景资料，不宜自动整体发布到网站。
+[GM 剧本](scenario/gm-script.md)、[英文玩家手册](scenario/player-packet.md) 和[结构化剧情参考](../content/scenario.zh-CN.json) 整理自 AI 辅助的原场次草案，用于主持备课和开发核对。原始课程附件、其他同学作业和 Office 副本不再收录在当前仓库树中。课程使用遵循教师要求，不将此应用视为教师发布的规则或评分工具。
 
-## 课程材料
+线上双语改编在 `shared/content.ts`，GM 私密提示在 `server/private-content.ts`。课程机制、既有世界、本事件虚构事实与场次约定的边界见 [决定记录](DECISIONS.md)。保留的参考资料不向玩家端打包，也不进入运行镜像。
 
-- `syllabus.pdf`：ENGR 4010 PDLC Fall 2026 Lead RPG syllabus。第2页解释Co-GM职责，第4页给评分结构，第5页有作业及AI使用要求，第7页列游戏日主题。
-- `game-rules.pdf`：课程Game Rules & Mechanics，3页。D20、相关加成、难度、五档后果和创意原则。
-- `nspe-code-of-ethics.pdf`：课程指定NSPE Code of Ethics；PDF标明2019年7月修订。保留原件供课程语境核对，未声称它代表今后的最新修订。
-- `class-6.pptx`：PDLC Lead RPG Class 6 Fall 2026课件。既往优先任务结果、临时医疗、文化能力活动、Co-GM评价二维码。
+## 应用资源
 
-课程内容入口：<https://lms.rpi.edu/ultra/courses/_26943_1/outline>，需要课程访问权限。
+- 海岸示意图：`src/components/Seascape.svelte`，为本应用绘制的 SVG。
+- 图标、品牌标记和 favicon：Font Awesome Free solid，按需本地打包，许可见 [Font-Awesome-Free.txt](../public/licenses/Font-Awesome-Free.txt)。
+- 自托管中文字体：`@fontsource-variable/noto-sans-sc`，Noto Sans SC，SIL Open Font License 1.1，许可见 [Noto-Sans-SC-OFL.txt](../public/licenses/Noto-Sans-SC-OFL.txt)。
 
-第8周概述：<https://lms.rpi.edu/ultra/courses/_26943_1/document/_1028137_1?view=content&state=view>。2026-10-21核对时，课前与课堂资源均包含NSPE准则。
-
-Co-GM评价表：<https://surveys.rpi.edu/jfe/form/SV_4UXvqLDBSGMnl9s>。课件二维码指向该表；这里只记录评价依据，不提交表单。
-
-## 公会材料
-
-总部、使命、组织文化、早期优先任务、第一次Co-GM准备表属于组内背景。`alternative-campaign.docx` 是另一份学生设计的campaign，独立于本场景，不能用其自设数值替代课程规则。
-
-## 本次原创草案
-
-`materials/scenario/draft-v1/` 包含AI辅助起草的《绿灯之下》GM剧本、英文玩家包和交互流程图。文件已明确区分原创NPC、事件、数值及会话约定。开发数据是这份草案的整理，不是教师发布的新作业要求。
-
-课纲第5页要求作业使用AI前获得教师许可。本材料包保留该要求，实际课程使用按教师许可范围执行。
-
-## 权利与发布
-
-本仓库没有统一授予所有材料开源许可。课程附件、NSPE文件和同学作品保留原有权利归属；创建本地Git仓库不等于获得公开再分发许可。后续公开应用时需明确选择内容和许可证。
-
-流程图内嵌了Noto Sans SC中文字体子集，其SIL Open Font License文本保存在HTML注释和同目录的 `Flowchart Font License.txt`。字体来源：Google Fonts的Noto Sans SC项目。
-
-## 网页应用新增资源（2026-10-21）
-
-- 网页双语改编：`shared/content.ts`，GM 私密提示：`server/private-content.ts`；依据原 GM / 玩家草案与开发种子，作为单独的 1.0.0 应用版本。
-- 海岸示意图：`src/components/Seascape.svelte`，为本应用绘制的 SVG，不包含参考材料的图片或原流程图代码。
-- 图标：Lucide，ISC 许可证。
-- 自托管中文字体：`@fontsource-variable/noto-sans-sc`（Noto Sans SC），SIL Open Font License 1.1；公开许可证为 `public/licenses/Noto-Sans-SC-OFL.txt`。与原流程图内嵌字体分别管理。
+仓库没有为所有历史材料统一授予开源许可；课程内容及小组作品保留各自权利归属。Git 历史中的旧材料与当前公开应用资源分别管理。
