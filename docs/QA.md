@@ -16,12 +16,42 @@ bun run build
 | 中英内容完整性、原剧本 ID / DC / 英文开场 | `tests/content.test.ts` |
 | 浏览器语言顺序、地区变体、实时切换与清理 | `tests/browser-locale.test.ts` |
 | 局域网 HTTP 下 UUID 回退 | `tests/ids.test.ts` |
+| Tailwind 主题、断点顺序、共享工具、无静态 CSS 与动画约定 | `tests/styles.test.ts` |
 | 五档结果、完整 / 精简流程、资源幂等、骰点更正、投票、存档校验 | `tests/engine.test.ts` |
 | SQLite 重启、事务、双 GM 冲突、权限投影和交接并发 | `tests/store.test.ts` |
 | 真实 HTTP / WebSocket、认证、重连、六人完整流程、静态资源和协作交接 | `tests/server.test.ts` |
 | 真实 Vite HTTP / WebSocket 代理、局域网来源、跨来源拒绝及开发资料访问拒绝 | `tests/proxy.test.ts` |
 
 GitHub Actions 在 Linux amd64 / arm64 镜像构建中执行类型检查、测试和生产构建；PR 只验证，`main` 通过后发布镜像。构建流程见 [部署说明](DEPLOYMENT.md)。
+
+## 2026-11-03 Tailwind 样式迁移验证
+
+环境为 Linux x64 / Bun 1.4.4，使用当前锁定的 Svelte 5.57.2、Tailwind CSS 4.3.3 和 Vite 8.3.5：
+
+- 首页、房间布局、各阶段卡片、执行 / 补救、成员、进度、交接、复盘与弹窗改用 Tailwind 工具类。`src/app.css` 保留主题 token、基础 `@apply`、共享 `@utility` 和骰子关键帧；工具类只扫描 `src/`。未新增依赖或修改锁文件、游戏规则与服务端内容。维护约定见 [样式指南](STYLING.md)。
+- 新增 6 项样式单测，直接编译实际样式入口，验证窄屏规则覆盖顺序、主题 / 选中态 / 焦点 / 禁用反馈、减少动态效果和仅 SVG 掷骰动画；同时检查所有 Svelte 组件无 `<style>` 或静态 `style`，仅保留投票百分比的运行时宽度绑定。
+- `bun run verify` 通过：Svelte 诊断 0 错误、0 警告；全部 67 项测试通过、0 失败；生产构建通过。Svelte 插件的 Vite 8 实验性支持提示仍然保留。
+- 使用本机已有的无头 Chromium 与临时数据库，对迁移前后构建执行 41 组对比，覆盖中英文、深浅色、320 / 390 / 768 / 1024 / 1280 / 1440 / 1920px 视口、全部阶段、创建步骤、玩家 / GM 执行状态、物资结果、投票计票、展开表单、交接编辑、邀请 / 笔记弹窗、焦点与悬停。
+- 对比的 DOM 结构及采样计算样式在归一化等价表示后对齐；39 组非动画场景的元素位置与尺寸未发现超过 0.25px 的差异。另两组直接检查骰子动画：正常模式仅 SVG 为 `dice-roll`，数字不动画；减少动态效果时两者均无动画。此一次性浏览器对比不属于 `bun test` 或 CI，也不是逐像素图像一致性的保证。
+- 本次未执行 Safari / Firefox、真实触屏硬件、Docker 或完整人工联机回归；移动视口和模拟悬停不替代真实设备验证。
+
+## 2026-11-03 本地额外依赖清理验证
+
+环境为 Linux x64 / Bun 1.4.4：
+
+- 在仓库外使用当前包清单与锁文件做干净安装，不包含本地额外安装的 Rollup、esbuild、Prettier 等包，类型检查、61 项测试和生产构建通过；单独的生产安装只包含 Zod。
+- 对原工作目录定向清理 9 个锁文件之外的包及其 3 个命令链接。另逐文件比对并清理两份 `magic-string` 0.30.21 嵌套重复副本，保留根目录必需包。保留全部 13 个直接依赖、当前锁定版本和跨平台可选依赖；未修改游戏代码、包清单或部署配置。
+- 执行 `bun install --lockfile-only --ignore-scripts` 后 Bun 报告无变化，锁文件内容保持不变，因为被清理的包原本不在锁文件中。随后 `bun install --frozen-lockfile` 检查 100 个安装包，无需新增安装。
+- 在原工作目录执行 `bun run verify` 通过：Svelte 诊断 0 错误、0 警告，61 项测试通过、0 失败，Vite 8.3.5 生产构建通过。Svelte 插件的 Vite 8 实验性支持提示仍存在；未新增 Docker 或人工浏览器验证。
+
+## 2026-11-03 依赖文档同步验证
+
+环境为 Linux x64 / Bun 1.4.4，使用仓库当前 `package.json` 与 `bun.lock`；完整版本快照见 [依赖与工具链](DEPENDENCIES.md)。
+
+- 首先执行 `bun install --frozen-lockfile`，将本地仍残留的 Vite 7.3.7 与 Bun 类型 1.4.3 同步至锁文件中的 Vite 8.3.5 与 `@types/bun` 1.4.4；逐项确认 13 个直接依赖的安装版本均与锁文件一致。包清单、锁文件和部署配置未修改。
+- `bun run check` 通过，Svelte 诊断为 0 错误、0 警告；`bun test tests` 全部 61 项通过、0 失败；`bun run build` 使用 Vite 8.3.5 构建通过。
+- Svelte 诊断无警告不代表启动日志无提示：`@sveltejs/vite-plugin-svelte` 6.2.4 在检查、构建和开发代理测试时均提示 Vite 8 支持为实验性；插件及 inspector 的 peer 范围尚未包含 Vite 8。该限制单独保留，不将本地通过表述为正式兼容支持。
+- 本次未执行 Docker / Compose / Watchtower 演练、Windows 回归、人工浏览器走查或真实移动设备检查；下文历史验证与平台限制仍然保留。
 
 ## 2026-11-02 仓库清理验证
 

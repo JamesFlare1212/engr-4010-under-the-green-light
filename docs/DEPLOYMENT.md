@@ -14,6 +14,8 @@ docker compose logs -f app watchtower
 
 默认访问 `http://localhost:3000`。Dockerfile 使用已核实存在的官方 `oven/bun:1.4.2-alpine`，有 amd64 / arm64 镜像。多阶段构建执行类型检查、测试与生产构建，运行阶段以非 root 用户启动。根目录只读，SQLite 放在可写卷，转译缓存放在 `/tmp`。
 
+`@types/bun` 已更新至 1.4.4，但它不改变上述 Bun 基础镜像；本地 Bun 1.4.4 的检查结果与 Docker 默认版本分别记录。当前应用、插件、Watchtower 和 Actions 版本及兼容性提示见 [依赖与工具链](DEPENDENCIES.md)。
+
 可选 `cp .env.example .env`，将 `APP_PORT` 改为其他外部端口。反向代理后的 `PUBLIC_ORIGIN` 应为浏览器实际使用的地址，例如 `https://game.example.com`。直接运行 Bun 支持 `PORT` 和 `DATABASE_PATH`，默认 3000 和 `./data/green-light.sqlite`。Compose 内部与健康检查端口固定为 3000。
 
 健康检查 `/api/health` 实际查询 SQLite。SIGTERM 会关闭 WebSocket 与数据库；服务恢复后客户端重连，命名卷保留场次与凭证摘要。

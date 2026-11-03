@@ -2,9 +2,11 @@
 
 ## 应用边界
 
-前端为 Svelte 5 单页应用，Vite 构建与 Tailwind CSS。Bun 提供 HTTP、WebSocket 和构建后的静态资源；`bun:sqlite` 存储场次、凭证摘要和命令去重记录。
+前端为 Svelte 5 单页应用，使用 Vite 8（Rolldown）构建与 Tailwind CSS 4。Bun 提供 HTTP、WebSocket 和构建后的静态资源；`bun:sqlite` 存储场次、凭证摘要和命令去重记录。具体锁定版本、Bun 运行时与类型包的区别，以及 Svelte 插件对 Vite 8 的实验性支持限制见 [依赖与工具链](DEPENDENCIES.md)。
 
 运行依赖仅为 Zod。Svelte、二维码、图标和字体与构建 / 类型检查工具一起列为开发依赖，构建后通过 `dist` 提供给浏览器。Docker 运行阶段使用 `bun install --frozen-lockfile --production`，不安装前端或开发工具。
+
+界面样式由 Svelte 模板中的 Tailwind 工具类组织；`src/app.css` 集中维护主题 token、`@layer base`、共享 `@utility` 和骰子动画配置。主题继续通过 CSS 媒体查询跟随系统，投票百分比保留运行时宽度绑定。断点、可访问状态与样式测试约定见 [样式指南](STYLING.md)。
 
 一个服务实例对应一个 SQLite 数据库。在线连接表保存在进程内，不能将多个独立实例挂到同一个数据库后当作可水平扩展服务。扩容应先引入共享广播及房间所有权机制。
 

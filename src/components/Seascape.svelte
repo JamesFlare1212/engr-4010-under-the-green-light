@@ -1,5 +1,5 @@
 <script lang="ts">let { compact = false }: { compact?: boolean } = $props();</script>
-<svg class:compact class="seascape" viewBox="0 0 920 560" fill="none" aria-hidden="true">
+<svg class="block h-auto w-full" class:compact viewBox="0 0 920 560" fill="none" aria-hidden="true">
   <defs>
     <linearGradient id="sky" x2="0" y2="560" gradientUnits="userSpaceOnUse"><stop stop-color="#123c49"/><stop offset="1" stop-color="#2e626a"/></linearGradient>
     <linearGradient id="ocean" x2="0" y2="230" gradientUnits="userSpaceOnUse"><stop stop-color="#487a7d"/><stop offset="1" stop-color="#173f4d"/></linearGradient>

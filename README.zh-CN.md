@@ -2,13 +2,13 @@
 
 [English](README.md) | 简体中文
 
-支持多设备联机的 Guardians 协作救援剧本应用。采用 **Bun、Svelte 5、Vite、TypeScript、SQLite、Tailwind CSS**，可用 Docker Compose 自托管。
+支持多设备联机的 Guardians 协作救援剧本应用。采用 **Bun、Svelte 5、Vite 8、TypeScript、SQLite、Tailwind CSS 4**，可用 Docker Compose 自托管。
 
 十二名维修人员被困在 The Shell 外围的潮汐泵站。海水已经涌入，屏幕却仍亮着绿色安全信号。团队需要调查证据、协调公会、选择路线，并完成通路、人员与隔离三个目标。
 
 ## 本地运行
 
-使用 Bun 1.4.2，依赖由 `bun.lock` 固定。
+本地开发已在 Bun 1.4.4 验证；Dockerfile 默认仍为 Bun 1.4.2。依赖实际版本由 `bun.lock` 固定，不能把 `package.json` 中的版本范围当成已安装版本。当前清单与兼容性提示见 [依赖与工具链](docs/DEPENDENCIES.md)，验证环境与结果见 [验证记录](docs/QA.md)。
 
 前端库在构建时打包，归入开发依赖；生产服务端仅安装 Zod，HTTP、WebSocket 和 SQLite 使用 Bun 内置支持。
 
@@ -55,6 +55,8 @@ docker compose -f compose.yaml -f compose.build.yaml up -d --build app
 7. 所有成员（含玩家与观察者）都可编辑交接、生成事实草稿，并先保存未完成的内容。实际通报、具名负责人和更新时间齐全后，由 GM 进入共同复盘。支持交接文本、GM 完整 JSON 存档导出，以及从存档建立新房间。
 
 明暗主题自动跟随浏览器偏好，并在偏好变化时即时更新。语言按每台设备的浏览器首选顺序匹配中英文，均不匹配时使用英文；浏览器语言变化时，界面立即同步。语言按钮仍可临时切换，直到浏览器语言再次改变或刷新页面；旧版保存的语言选择不再覆盖浏览器设置。
+
+界面布局、响应式与状态样式使用 Svelte 组件中的 Tailwind CSS 4 工具类。`src/app.css` 只保留主题 token、Tailwind 基础 / 共享工具和骰子关键帧，不再集中维护页面专属 CSS。维护约定见 [样式指南](docs/STYLING.md)。
 
 界面图标统一使用 Font Awesome Free 实心 SVG，按图标导入并随应用本地打包，由 `src/components/Icon.svelte` 渲染；品牌标记与 favicon 使用其中的 shield-heart。虚拟掷骰仅让 D20 图形旋转 700 毫秒，结果点数保持静止；连接中的状态图标才持续旋转。系统启用减少动态效果时关闭动画。署名与许可证见 [Font Awesome Free](public/licenses/Font-Awesome-Free.txt)。
 

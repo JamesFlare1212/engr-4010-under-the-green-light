@@ -2,13 +2,13 @@
 
 English | [简体中文](README.zh-CN.md)
 
-A multiplayer Guardians rescue scenario app for play across multiple devices. Built with **Bun, Svelte 5, Vite, TypeScript, SQLite, and Tailwind CSS**, with Docker Compose for self-hosting.
+A multiplayer Guardians rescue scenario app for play across multiple devices. Built with **Bun, Svelte 5, Vite 8, TypeScript, SQLite, and Tailwind CSS 4**, with Docker Compose for self-hosting.
 
 Twelve maintenance workers are trapped in a tidal pump station outside The Shell. Seawater is flooding in, but the screen still shows a green safety signal. The team must investigate evidence, coordinate with other guilds, choose a route, and complete three objectives: establish access, evacuate the workers, and isolate the hazards.
 
 ## Run locally
 
-Use Bun 1.4.2. Dependencies are pinned in `bun.lock`.
+Local development has been validated with Bun 1.4.4; the Dockerfile still defaults to Bun 1.4.2. Exact dependency versions are pinned in `bun.lock`; the ranges in `package.json` are not the installed versions. See [dependency versions and compatibility notes](docs/DEPENDENCIES.md) (Chinese) and the [QA record](docs/QA.md).
 
 Frontend libraries are bundled during the build and listed with development dependencies. The production server only installs Zod and uses Bun's built-in HTTP, WebSocket, and SQLite support.
 
@@ -55,6 +55,8 @@ This mode does not update the app automatically. See the [deployment guide](docs
 7. All members, including players and observers, can edit the handover, generate a factual draft, and save unfinished work. Once the actual public statement, named owner, and next update time are complete, the GM opens the shared debrief. The app supports handover text export, full JSON archive export for GMs, and creating a new room from an archive.
 
 Appearance follows the browser's light or dark preference and updates immediately when it changes. Each device also follows its browser's preferred supported language (English or Chinese; otherwise English). Browser language changes update the interface immediately. The language button provides a temporary override until the next browser language change or page reload; older saved language choices no longer override the browser.
+
+UI layouts, responsive behavior, and state styling use Tailwind CSS 4 utilities in the Svelte components. `src/app.css` retains theme tokens, Tailwind base/shared utilities, and dice keyframes rather than page-specific CSS. See the [styling guide](docs/STYLING.md) (Chinese).
 
 Interface icons use locally bundled Font Awesome Free solid SVGs, imported individually through `src/components/Icon.svelte`. The brand mark and favicon use its shield-heart icon. Virtual rolls animate the D20 icon for 700 ms while the result stays still; connection spinners appear only while connecting. Reduced-motion preferences disable animations. Attribution and license: [Font Awesome Free](public/licenses/Font-Awesome-Free.txt).
 

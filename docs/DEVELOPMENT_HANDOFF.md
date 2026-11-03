@@ -1,6 +1,6 @@
 # 开发交接：规则、状态与验收
 
-线上游戏使用 Bun、Svelte 5、Vite、TypeScript、SQLite 和 Tailwind CSS。运行与检查从 [README](../README.zh-CN.md) 开始；网络协议见 [实现与协议](ARCHITECTURE.md)，剧情资料入口见 [剧情与世界](SCENARIO.md)。
+线上游戏使用 Bun、Svelte 5、Vite 8、TypeScript、SQLite 和 Tailwind CSS 4。运行与检查从 [README](../README.zh-CN.md) 开始；依赖版本与升级检查见 [依赖与工具链](DEPENDENCIES.md)，网络协议见 [实现与协议](ARCHITECTURE.md)，剧情资料入口见 [剧情与世界](SCENARIO.md)。
 
 ## 修改入口
 
@@ -13,6 +13,7 @@
 | SQLite、幂等命令、权限投影 | `server/store.ts` |
 | HTTP、WebSocket、生产静态资源 | `server/index.ts` |
 | 界面与客户端同步 | `src/components/`、`src/lib/client.ts` |
+| Tailwind 主题、共享工具与样式约定 | `src/app.css`、[样式指南](STYLING.md) |
 | 原场次叙述与结构化参考 | `docs/scenario/`、`content/scenario.zh-CN.json` |
 
 运行内容以代码中的 1.0.0 应用版本为准。参考剧本保留原场次的时长和主持安排；原种子为 `0.1.0-draft`，用于核对 ID、数值和英文开场，不是线上游戏的数据源。
