@@ -6,7 +6,10 @@ import { parse } from 'svelte/compiler';
 
 const root = resolve(import.meta.dir, '..');
 const stylesheet = readFileSync(resolve(root, 'src/app.css'), 'utf8');
-const componentPaths = [...new Bun.Glob('src/**/*.svelte').scanSync({ cwd: root })];
+const componentPaths = [...new Bun.Glob('src/**/*.svelte').scanSync({ cwd: root })].sort();
+const components = new Map<string, { source: string; ast: ReturnType<typeof parse> }>();
+// Give each component its own budget for slow ARM64/QEMU builds.
+const componentTimeout = 15_000;
 let generated = '';
 
 beforeAll(async () => {
@@ -25,12 +28,35 @@ beforeAll(async () => {
   ]);
 });
 
-function walk(value: unknown, visit: (node: Record<string, unknown>) => void) {
+function component(path: string) {
+  let cached = components.get(path);
+  if (!cached) {
+    const source = readFileSync(resolve(root, path), 'utf8');
+    cached = { source, ast: parse(source) };
+    components.set(path, cached);
+  }
+  return cached;
+}
+
+function walkMarkup(value: unknown, visit: (node: Record<string, unknown>) => void) {
   if (!value || typeof value !== 'object') return;
-  if (Array.isArray(value)) { value.forEach(item => walk(item, visit)); return; }
+  if (Array.isArray(value)) { value.forEach(item => walkMarkup(item, visit)); return; }
   const node = value as Record<string, unknown>;
   visit(node);
-  Object.values(node).forEach(item => walk(item, visit));
+  // Attribute values, text and JavaScript expressions cannot contain markup attributes.
+  if (['Attribute', 'StyleDirective', 'Class', 'Text'].includes(String(node.type))) return;
+  for (const [key, item] of Object.entries(node)) {
+    if (!['expression', 'start', 'end', 'loc'].includes(key)) walkMarkup(item, visit);
+  }
+}
+
+function inlineStyles(ast: ReturnType<typeof parse>) {
+  const staticStyles: string[] = [], dynamicStyles: string[] = [];
+  walkMarkup(ast.html, node => {
+    if (node.type === 'Attribute' && node.name === 'style') staticStyles.push(String(node.name));
+    if (node.type === 'StyleDirective') dynamicStyles.push(String(node.name));
+  });
+  return { staticStyles, dynamicStyles };
 }
 
 test('shared stylesheet keeps widget layouts out of CSS and defines primitives only through Tailwind', () => {
@@ -42,17 +68,39 @@ test('shared stylesheet keeps widget layouts out of CSS and defines primitives o
   for (const [, , body] of primitives) expect(body!.trim()).toMatch(/^@apply\s+[\s\S]+;$/);
 });
 
-test('components have no handwritten style blocks or static inline CSS; only ballot width is data-driven', () => {
-  const dynamicStyles: string[] = [];
-  for (const path of componentPaths) {
-    const ast = parse(readFileSync(resolve(root, path), 'utf8'));
-    expect(ast.css ?? null).toBeNull();
-    walk(ast.html, node => {
-      if (node.type === 'Attribute') expect(node.name).not.toBe('style');
-      if (node.type === 'StyleDirective') dynamicStyles.push(`${path}:${String(node.name)}`);
-    });
-  }
-  expect(dynamicStyles).toEqual(['src/components/PollPanel.svelte:width']);
+test.each(componentPaths)('%s has no handwritten CSS; only the ballot may bind its width', path => {
+  const { ast } = component(path);
+  const { staticStyles, dynamicStyles } = inlineStyles(ast);
+  expect(ast.css ?? null).toBeNull();
+  expect(staticStyles).toEqual([]);
+  expect(dynamicStyles).toEqual(path === 'src/components/PollPanel.svelte' ? ['width'] : []);
+}, componentTimeout);
+
+test('markup inspection still detects style blocks, static attributes and directives in nested branches and snippets', () => {
+  const ast = parse(`
+    {#if visible}
+      <section><span style="color: red">Text</span></section>
+    {:else}
+      {#each sizes as size}<p style:height={size}>Item</p>{/each}
+    {/if}
+    {#snippet row()}<article style:width={'50%'}><i style="opacity: .5"></i></article>{/snippet}
+    <style>p { color: red; }</style>
+  `);
+  expect(ast.css ?? null).not.toBeNull();
+  expect(inlineStyles(ast)).toEqual({ staticStyles: ['style', 'style'], dynamicStyles: ['height', 'width'] });
+});
+
+test('markup traversal skips JavaScript expressions without skipping their surrounding elements', () => {
+  const ast = parse(`<button onclick={() => run({ style: 'not a markup attribute' })}>Action</button>{#if visible()}<span>{format(value)}</span>{/if}`);
+  const types = new Set<string>(), elements: string[] = [];
+  walkMarkup(ast.html, node => {
+    types.add(String(node.type));
+    if (node.type === 'Element') elements.push(String(node.name));
+  });
+  expect(types.has('CallExpression')).toBe(false);
+  expect(types.has('ArrowFunctionExpression')).toBe(false);
+  expect(elements).toEqual(['button', 'span']);
+  expect(inlineStyles(ast)).toEqual({ staticStyles: [], dynamicStyles: [] });
 });
 
 test('narrow phone utilities override tablet utilities with consistently ordered pixel breakpoints', () => {
@@ -89,14 +137,14 @@ test('reduced-motion mode disables animations and transitions even when a utilit
 });
 
 test('dice animation is applied to the icon component, never to the result number', () => {
-  const source = readFileSync(resolve(root, 'src/components/CheckPanel.svelte'), 'utf8');
+  const { source, ast } = component('src/components/CheckPanel.svelte');
   const animated: string[] = [];
-  walk(parse(source).html, node => {
+  walkMarkup(ast.html, node => {
     if (!Array.isArray(node.attributes)) return;
     for (const attribute of node.attributes as { name?: string; start: number; end: number }[]) {
       if (attribute.name === 'class' && source.slice(attribute.start, attribute.end).includes('animate-dice-roll')) animated.push(String(node.name));
     }
   });
   expect(animated).toEqual(['Icon']);
-  expect(readFileSync(resolve(root, 'src/components/Icon.svelte'), 'utf8')).toContain('motion-safe:animate-spin');
-});
+  expect(component('src/components/Icon.svelte').source).toContain('motion-safe:animate-spin');
+}, componentTimeout);

@@ -101,4 +101,4 @@ docker compose up -d app
 
 单实例课堂 / 小组应用，每房间最多 40 名成员，建议 4–8 名玩家。四位码用于邀请，权限由会话令牌决定。浏览器本地存储丢失后不能仅凭姓名找回 GM 身份，可用此前导出的存档创建新房间。无需外部账号、数据库或服务密钥。
 
-当前环境没有 Docker Engine，未实际执行容器构建、Compose 启动或 Watchtower 更新演练。具体已完成的静态校验与应用检查见 [验证记录](QA.md)。首次上线应确认 Actions 成功、应用容器 healthy，再推送一次更新确认 Watchtower 日志与房间恢复。
+本次 CI 修复已验证 amd64 Docker 构建阶段及 ARM64/QEMU 样式单测，具体范围见 [验证记录](QA.md)。尚未执行修复版完整双架构镜像构建、Compose 启动或 Watchtower 更新演练。首次上线应确认 Actions 成功、应用容器 healthy，再推送一次更新确认 Watchtower 日志与房间恢复。

@@ -24,6 +24,15 @@ bun run build
 
 GitHub Actions 在 Linux amd64 / arm64 镜像构建中执行类型检查、测试和生产构建；PR 只验证，`main` 通过后发布镜像。构建流程见 [部署说明](DEPLOYMENT.md)。
 
+## 2026-11-03 ARM64 样式测试超时修复
+
+- [失败运行 41742239039](https://github.com/JamesFlare1212/engr-4010-under-the-green-light/actions/runs/41742239039) 对应 `7af45b9`。CI 的 amd64 检查、67 项测试和构建通过；arm64 在 QEMU 中执行聚合组件样式检查时超过 Bun 默认 5 秒上限，结果为 66 项通过、1 项超时。不是 CSS 编译错误，也不是日志中的 Vite 8 实验性提示导致。
+- 将全组件聚合检查改为按组件独立的参数化用例，缓存解析结果，仅遍历模板而不进入 JavaScript 表达式，并把逐属性断言改为聚合违规项后断言。保留所有组件、`<style>` / 静态 `style` 禁用检查和仅投票宽度允许动态绑定的约束。
+- 新增嵌套分支 / snippet 检出和跳过 JavaScript 表达式的回归用例。仅组件解析相关用例使用 15 秒上限，其他测试继续使用默认超时；没有跳过检查或调整全局测试参数。
+- 本地 Linux x64 / Bun 1.4.4 的 `bun run verify` 通过：Svelte 诊断 0 错误、0 警告，82 项测试通过、0 失败，生产构建通过。
+- 使用临时匿名 Docker 配置，在 `oven/bun:1.4.2-alpine` 的 linux/amd64 构建阶段完成冻结安装、类型检查、82 项测试和生产构建，全部通过。未修改宿主机 Docker 登录配置，也未推送镜像。远端双架构流水线仍需对修复提交运行确认。
+- 另从相同 Bun 镜像提取 ARM64 运行时，通过临时用户态 QEMU 执行样式单测：原版本复现 5 秒超时（5 项通过、1 项失败），修复版 21 项全部通过。该验证未注册宿主机 binfmt、未运行特权容器，也不等于修复版完整 ARM64 镜像已构建成功。
+
 ## 2026-11-03 Tailwind 样式迁移验证
 
 环境为 Linux x64 / Bun 1.4.4，使用当前锁定的 Svelte 5.57.2、Tailwind CSS 4.3.3 和 Vite 8.3.5：
@@ -81,6 +90,6 @@ GitHub Actions 在 Linux amd64 / arm64 镜像构建中执行类型检查、测�
 
 Windows / Bun 1.4.4 在清理前复现一项已有失败：`tests/server.test.ts` 的生产静态文件测试返回 400。`server/index.ts` 的路径边界检查使用 `/`，与 Windows 的反斜杠路径不匹配；原主分支同样失败。开发代理与生产静态服务是不同路径，不应据此将 Windows 生产模式标为通过。
 
-历史记录中 Docker Compose 配置与 Actions 语法做过静态校验；当前环境没有 Docker Engine，未执行真实镜像构建、容器启动、Watchtower 更新或持久化恢复演练。上线按部署说明确认健康检查、数据卷、WebSocket 和更新后恢复。
+历史记录中 Docker Compose 配置与 Actions 语法做过静态校验；本次已实际验证 amd64 Docker 构建阶段和 ARM64/QEMU 样式单测，范围见上文。修复版完整双架构镜像构建、应用容器启动、Watchtower 更新和持久化恢复演练仍未完成。上线按部署说明确认健康检查、数据卷、WebSocket 和更新后恢复。
 
 手机尺寸检查不等于真实 iOS / Android 硬件测试。物理摄像头扫码、长时间后台休眠、Safari / Firefox 全套交互和公网 TLS 代理仍需对应环境验证。朗读使用设备的 Speech Synthesis；不提供离线首次加载或多实例广播。
