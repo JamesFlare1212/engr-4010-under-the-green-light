@@ -66,6 +66,8 @@ Both languages synchronize through the same content IDs. Custom plans, notes, st
 
 SQLite is the authoritative save store. WebSocket connections deliver complete snapshots filtered by each member's permissions. The browser saves its credentials and latest snapshot so refreshing or reconnecting restores the same identity. During a disconnection, reading remains available and writes pause; reconnecting fetches the current server state. The app includes heartbeats, reconnect backoff, synchronization when returning to the foreground, HTTP snapshot recovery, and presence tracking across browser tabs.
 
+Commands are persisted immediately. Broadcasts coalesce over a fixed 16 ms window per room and send the latest complete state; clients skip duplicate snapshots and batch reading-cache writes.
+
 Write commands have unique IDs. Database transactions save progress and deduplication records together. GM actions check the state version and return the latest state on a conflict; player votes and applications bind to specific IDs and can be submitted concurrently. See [architecture and protocol](docs/ARCHITECTURE.md) (Chinese).
 
 ## Checks
@@ -79,6 +81,16 @@ bun run verify
 ```
 
 Tests cover rules, idempotent resource use, permissions, ballot secrecy, SQLite restarts, complete playthroughs over HTTP, and real WebSocket disconnection and reconnection. The [QA record](docs/QA.md) (Chinese) distinguishes automated tests, browser checks, and environment checks that have not been performed.
+
+To benchmark concurrent votes over real HTTP / WebSocket connections with a temporary SQLite database:
+
+```bash
+bun run benchmark:sync 12 300 5
+# members (2–40), history entries (0–1500), rounds (1–100), storage (file or memory)
+bun run benchmark:sync 40 1500 5 memory
+```
+
+See the [synchronization performance investigation](docs/PERFORMANCE.md) (Chinese) for measurements and limitations.
 
 ## Repository layout and development references
 

@@ -49,6 +49,48 @@ test('real WebSocket: authenticated projections, presence across tabs and reconn
   secondTab.ws.close(); await gmSocket.until(s => s.phase === 'briefing' && !s.online.includes(p.memberId));
   const reconnected = socket(f.base, p); const restored = await reconnected.until(s => s.phase === 'briefing'); expect(restored.me).toBe(p.memberId); expect(restored.members).toHaveLength(2);
 });
+test('a burst broadcasts only the final complete state while every vote is persisted and private projections stay separate', async () => {
+  const f = fixture(), host = await f.create(), a = await f.join(host, 'A'), b = await f.join(host, 'B');
+  const room = f.app.store.room(host.code); room.phase = 'route_choice'; room.gmNotes = 'PRIVATE PERFORMANCE TEST'; f.app.store.save(room);
+  const opened = f.app.store.command(host.code, host.token, { id: crypto.randomUUID(), revision: room.revision, type: 'route_vote' });
+  const pollId = opened.polls.at(-1)!.id;
+  const peers = [host, a, b].map(member => socket(f.base, member));
+  await Promise.all(peers.map(peer => peer.until(state => state.online.length === 3)));
+  const offsets = peers.map(peer => peer.states.length);
+  const commandsBefore = (f.app.store.db.query('SELECT COUNT(*) AS n FROM commands').get() as { n: number }).n;
+  for (let i = 0; i < 20; i++) {
+    f.app.store.command(host.code, (i % 2 ? a : b).token, {
+      id: crypto.randomUUID(), revision: opened.revision, type: 'vote',
+      payload: { pollId, option: i % 2 ? 'high_line' : 'quiet_water' }
+    });
+    f.app.broadcast(host.code);
+  }
+  const final = await Promise.all(peers.map(peer => peer.until(state => state.revision === opened.revision + 20)));
+  expect(peers.map((peer, i) => peer.states.length - offsets[i]!)).toEqual([1, 1, 1]);
+  const commandsAfter = (f.app.store.db.query('SELECT COUNT(*) AS n FROM commands').get() as { n: number }).n;
+  expect(commandsAfter - commandsBefore).toBe(20);
+  expect(final.map(state => state.polls.at(-1)!.myVote)).toEqual([null, 'high_line', 'quiet_water']);
+  expect(final.every(state => state.polls.at(-1)!.counts === null && state.polls.at(-1)!.voted.length === 2)).toBeTrue();
+  expect(final[0]!.gmNotes).toBe('PRIVATE PERFORMANCE TEST');
+  for (const state of final.slice(1)) { expect(JSON.stringify(state)).not.toContain('PRIVATE PERFORMANCE TEST'); expect('ballots' in state.polls.at(-1)!).toBeFalse(); }
+});
+
+test('pending broadcasts are isolated by room and cancelled when the server stops', async () => {
+  const f = fixture(), a = await f.create(), b = await f.create();
+  const peers = [socket(f.base, a), socket(f.base, b)];
+  await Promise.all(peers.map(peer => peer.until(state => state.online.length === 1)));
+  for (const [i, member] of [a, b].entries()) {
+    f.app.store.command(member.code, member.token, { id: crypto.randomUUID(), revision: 0, type: 'profile', payload: { name: `Updated ${i}`, character: 'engineer' } });
+    f.app.broadcast(member.code);
+  }
+  const final = await Promise.all(peers.map(peer => peer.until(state => state.revision === 1)));
+  expect(final.map(state => state.members[0]!.name)).toEqual(['Updated 0', 'Updated 1']);
+  f.app.broadcast(a.code); f.app.broadcast(b.code);
+  cleanup.splice(cleanup.indexOf(f.app.stop), 1);
+  f.app.stop();
+  await Bun.sleep(30); // A pending callback must not read the closed database.
+});
+
 test('HTTP sync: players can vote at the same revision while concurrent GM actions return 409 with the latest state', async () => {
   const f = fixture(), host = await f.create('short', 'physical', 2), gm2 = await f.join(host, 'Co-GM'), a = await f.join(host, 'A'), b = await f.join(host, 'B');
   await f.send(host, 'role', { memberId: gm2.memberId, role: 'gm' });

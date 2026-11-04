@@ -20,9 +20,19 @@ bun run build
 | 五档结果、完整 / 精简流程、资源幂等、骰点更正、投票、存档校验 | `tests/engine.test.ts` |
 | SQLite 重启、事务、双 GM 冲突、权限投影和交接并发 | `tests/store.test.ts` |
 | 真实 HTTP / WebSocket、认证、重连、六人完整流程、静态资源和协作交接 | `tests/server.test.ts` |
+| 广播合并、权限隔离、房间独立调度与停服清理 | `tests/server.test.ts` |
+| 重复快照、同版本在线变化、缓存延后合并与离页刷新 | `tests/snapshots.test.ts` |
 | 真实 Vite HTTP / WebSocket 代理、局域网来源、跨来源拒绝及开发资料访问拒绝 | `tests/proxy.test.ts` |
 
 GitHub Actions 在 Linux amd64 / arm64 镜像构建中执行类型检查、测试和生产构建；PR 只验证，`main` 通过后发布镜像。构建流程见 [部署说明](DEPLOYMENT.md)。
+
+## 2026-11-04 多人同步性能调查
+
+- 环境为 Windows x64 / Bun 1.4.4。确认每条命令全房广播完整状态，以及客户端重复应用 HTTP / WebSocket 快照并同步写缓存的问题；改为每房间 16 ms 固定窗口发送最新权限投影、同成员多标签页复用序列化、客户端去重与延后缓存写入。每条命令仍立即保存，未降低持久化级别。
+- 新增 `bun run benchmark:sync`，使用临时数据库和真实 HTTP / WebSocket 压测。完成文件 / 内存 SQLite 对照与 40 人长历史压力场景。流量明显下降；文件 SQLite 的总体延迟仍受同步事务成本影响，不据此承诺线上延迟改善比例。具体数据与限制见 [性能调查](PERFORMANCE.md)。
+- 新增 6 项回归，覆盖一批命令全部持久化、广播最终状态、权限投影、在线变化、缓存合并和清理。修复验证中复现的两个 Windows 路径兼容问题：静态服务边界比较使用系统分隔符，样式测试统一 Glob 路径后识别投票宽度例外。
+- `bun run check` 通过，Svelte 诊断 0 错误、0 警告；`bun test tests` 全部 88 项通过、0 失败；`bun run build` 通过。Vite 8 实验性支持提示仍存在。
+- 本次没有执行浏览器性能录制、真实手机联机、部署服务器或公网代理检查，没有部署改动。
 
 ## 2026-11-03 ARM64 样式测试超时修复
 
@@ -88,7 +98,7 @@ GitHub Actions 在 Linux amd64 / arm64 镜像构建中执行类型检查、测�
 
 ## 平台与环境限制
 
-Windows / Bun 1.4.4 在清理前复现一项已有失败：`tests/server.test.ts` 的生产静态文件测试返回 400。`server/index.ts` 的路径边界检查使用 `/`，与 Windows 的反斜杠路径不匹配；原主分支同样失败。开发代理与生产静态服务是不同路径，不应据此将 Windows 生产模式标为通过。
+Windows / Bun 1.4.4 曾复现一项已有失败：`tests/server.test.ts` 的生产静态文件测试返回 400。该路径边界问题已在 2026-11-04 修复，当前 Windows 自动回归通过；历史记录仍保留当时结果。自动静态资源回归不等于完整 Windows 生产部署演练。
 
 历史记录中 Docker Compose 配置与 Actions 语法做过静态校验；本次已实际验证 amd64 Docker 构建阶段和 ARM64/QEMU 样式单测，范围见上文。修复版完整双架构镜像构建、应用容器启动、Watchtower 更新和持久化恢复演练仍未完成。上线按部署说明确认健康检查、数据卷、WebSocket 和更新后恢复。
 

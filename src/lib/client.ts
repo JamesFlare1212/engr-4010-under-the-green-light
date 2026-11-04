@@ -1,6 +1,7 @@
 import { writable, get } from 'svelte/store';
 import { bi, type RoomView, type Session, type Text, type Settings, type Command } from '../../shared/types';
 import { uuid } from '../../shared/ids';
+import { sameSnapshot, snapshotCache } from './snapshots';
 export const room = writable<RoomView | null>(null);
 export const session = writable<Session | null>(null);
 export const connection = writable<'connecting' | 'live' | 'offline' | 'expired'>('connecting');
@@ -13,6 +14,7 @@ let fallback: ReturnType<typeof setInterval> | undefined;
 let generation = 0;
 let attempts = 0;
 let lastPong = 0;
+const cache = snapshotCache(value => localStorage.setItem(`green-light:cache:${value.code}`, JSON.stringify(value)));
 export function savedSessions(): Session[] {
   try { return Object.values(JSON.parse(localStorage.getItem('green-light:sessions') ?? '{}')); } catch { return []; }
 }
@@ -23,9 +25,10 @@ function persist(s: Session) {
 function snapshot(value: RoomView) {
   const current = get(room);
   if (value.code !== get(session)?.code || value.me !== get(session)?.memberId) return;
-  if (current && current.code === value.code && current.revision > value.revision) return;
+  if (current && current.id === value.id && current.me === value.me && current.revision > value.revision) return;
+  if (sameSnapshot(current, value)) return;
   room.set(value);
-  try { localStorage.setItem(`green-light:cache:${value.code}`, JSON.stringify(value)); } catch { /* Network state remains authoritative. */ }
+  cache.queue(value);
 }
 class ApiError extends Error { constructor(public status: number, public text: Text) { super(text.en); } }
 async function request(path: string, init: RequestInit = {}, timeout = 12_000) {
@@ -123,6 +126,7 @@ export async function command(type: string, payload: Record<string, unknown> = {
   } catch (error) { errorNotice(error); await refresh(s); return false; } finally { busy.set(false); }
 }
 export function disconnect() {
+  cache.flush();
   generation++; clearTimeout(reconnect); clearInterval(heartbeat); clearInterval(fallback); fallback = undefined;
   if (socket) { socket.onclose = null; socket.close(); socket = null; }
 }
@@ -180,4 +184,5 @@ export async function copy(text: string): Promise<boolean> {
   return false;
 }
 window.addEventListener('online', () => { const s = get(session); if (s) { disconnect(); connect(s); } });
-document.addEventListener('visibilitychange', () => { const s = get(session); if (s && document.visibilityState === 'visible') { if (!socket || socket.readyState > 1) { disconnect(); connect(s); } else refresh(s); } });
+window.addEventListener('pagehide', () => cache.flush());
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') cache.flush(); const s = get(session); if (s && document.visibilityState === 'visible') { if (!socket || socket.readyState > 1) { disconnect(); connect(s); } else refresh(s); } });
