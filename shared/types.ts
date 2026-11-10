@@ -10,7 +10,9 @@ export type Tier = typeof tiers[number];
 export type Role = 'gm' | 'player' | 'spectator';
 export type RouteId = 'high_line' | 'quiet_water' | 'borrowed_channel' | 'custom';
 export interface Settings { mode: 'full' | 'short'; gmCount: number; dice: 'virtual' | 'physical' }
-export interface Member { id: string; name: string; role: Role; character: string; leads: number; joinedAt: number }
+export interface Member { id: string; name: string; role: Role; character: string; leads: number; joinedAt: number; recoverySeat?: true }
+/** Historical attribution only: no role, session or active seat. */
+export type ArchivedMember = Omit<Member, 'role' | 'recoverySeat'>;
 export interface Result { die: number; total: number; dc: number; delta: number; rawTier: Tier; tier: Tier; kitSpent: boolean; rolledAt: number }
 export interface Check {
   id: string; kind: 'preparation' | 'execution'; objective: Objective;
@@ -33,11 +35,12 @@ export interface Tracks { evacuated: number; waiting: number; observation: numbe
 export interface Log { id: string; at: number; actorId: string; text: Text }
 export interface Room {
   schemaVersion: 1; scenarioVersion: '1.0.0'; id: string; code: string; revision: number; createdAt: number;
-  hostId: string; settings: Settings; phase: Phase; members: Member[]; evidence: string[];
+  hostId: string; settings: Settings; phase: Phase; members: Member[]; archivedMembers: ArchivedMember[]; evidence: string[];
   checks: Check[]; polls: Poll[]; route: RouteId | null;
   customRoute: { plan: string; costs: string; assumptions: string };
   emergencyKits: number; report: Report; override: Tracks | null; overrideReason: string;
   reflections: Record<string, Record<string, string>>; gmNotes: string;
+  recovery?: { ownerId: string; at: number };
   clock: { runningSince: number | null; elapsed: number };
   logs: Log[];
 }

@@ -38,6 +38,10 @@ function socket(base: string, session: Session) {
   cleanup.push(() => ws.close());
   return { ws, states, until };
 }
+test('health distinguishes the room protocol, migrated database and archive format versions', async () => {
+  const f = fixture(), result = await f.api('/api/health');
+  expect(result.status).toBe(200); expect(result.data).toMatchObject({ ok: true, schemaVersion: 1, databaseVersion: 2, archiveVersion: 2 });
+});
 test('real WebSocket: authenticated projections, presence across tabs and reconnection preserve identity', async () => {
   const f = fixture(), host = await f.create(), p = await f.join(host, 'Player');
   const gmSocket = socket(f.base, host), playerSocket = socket(f.base, p);

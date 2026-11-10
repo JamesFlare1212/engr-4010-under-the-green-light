@@ -2,6 +2,7 @@ import { describe, test, expect } from 'bun:test';
 import { execute, newRoom, settle, tierFor, validateArchive, GameFault } from '../server/engine';
 import { objectives, type Room, type Check, type Objective, type Tier } from '../shared/types';
 import { tracks } from '../shared/content';
+import { canOpenKitVote, handoverComplete, isPendingPoll } from '../shared/state';
 
 function setup(mode: 'full' | 'short' = 'short', count = 2) {
   const room = newRoom('1234', 'GM', { mode, gmCount: 1, dice: 'physical' });
@@ -95,15 +96,116 @@ describe('kits, roll permissions and voting boundaries', () => {
   });
   test('headcount and factual corrections cannot make workers disappear', () => { const f = setup(); f.room.phase = 'ending'; expect(() => f.run('override_tracks', { evacuated: 7, waiting: 4, observation: 0, isolation: 'verified', clinic: 'complete', reason: 'bad count' })).toThrow(); });
 });
+describe('cross-state remediation and recruitment regressions', () => {
+  test.each(['keep', 'spend'])('a failed correction after %s creates a fresh remediation vote without double-spending', choice => {
+    const f = setup(); f.room.phase = 'execution'; const check = f.roll('access', 7); f.vote(choice);
+    const previous = f.room.polls.at(-1)!;
+    f.run('correct_die', { checkId: check.id, die: 6, reason: 'Recounted the physical die' });
+    const fresh = f.room.polls.at(-1)!;
+    expect(fresh.id).not.toBe(previous.id); expect(fresh.status).toBe('open'); expect(fresh.ballots).toEqual({});
+    expect(f.room.emergencyKits).toBe(2); expect(check.result?.kitSpent).toBe(false);
+    expect(canOpenKitVote(f.room, check)).toBe(false);
+    f.vote('spend'); expect(f.room.emergencyKits).toBe(1); expect(check.result?.kitSpent).toBe(true);
+    expect(() => f.run('kit_vote', { checkId: check.id })).toThrow();
+  });
+  test('empty or declined historical votes do not permanently hide an available kit action', () => {
+    const f = setup(); f.room.phase = 'execution'; const check = f.roll('access', 7);
+    f.run('close_vote', { pollId: f.room.polls.at(-1)!.id });
+    expect(canOpenKitVote(f.room, check)).toBe(true);
+    f.run('kit_vote', { checkId: check.id }); f.vote('keep');
+    expect(canOpenKitVote(f.room, check)).toBe(true);
+    f.roll('evacuation', 10); expect(canOpenKitVote(f.room, check)).toBe(false);
+  });
+  test('a corrected success does not reopen remediation and a corrected failure without players stays editable', () => {
+    const f = setup(); f.room.phase = 'execution'; const check = f.roll('access', 7); f.vote('spend');
+    f.run('correct_die', { checkId: check.id, die: 10, reason: 'Correction' });
+    expect(f.room.polls.some(isPendingPoll)).toBe(false);
+    for (const p of f.players) f.run('role', { memberId: p.id, role: 'spectator' });
+    f.run('correct_die', { checkId: check.id, die: 6, reason: 'Second correction' });
+    expect(check.result?.die).toBe(6); expect(canOpenKitVote(f.room, check)).toBe(false);
+  });
+  test('recruitment assigns a fresh ID and rejects delayed responses and rolls from the previous round', () => {
+    const f = setup(); f.room.phase = 'execution';
+    f.run('open_check', { objective: 'access', action: 'plan', backup: 'backup', bonus: 2, creative: 0 });
+    const check = f.room.checks.at(-1)!, oldId = check.id;
+    execute(f.room, f.players[0]!, 'volunteer', { checkId: oldId, willing: true }); f.run('select_lead', { checkId: oldId });
+    f.run('recruit_again', { checkId: oldId });
+    expect(check.id).not.toBe(oldId); expect(f.room.checks).toHaveLength(1);
+    expect(() => execute(f.room, f.players[1]!, 'volunteer', { checkId: oldId, willing: true })).toThrow();
+    expect(check.responses).toEqual({});
+    execute(f.room, f.players[1]!, 'volunteer', { checkId: check.id, willing: true }); f.run('select_lead', { checkId: check.id });
+    expect(() => f.run('roll', { checkId: oldId, die: 20 })).toThrow();
+    expect(check.result).toBeNull(); expect(check.leadId).toBe(f.players[1]!.id);
+    f.run('roll', { checkId: check.id, die: 10 }); expect(check.result?.die).toBe(10);
+  });
+  test('removing the last nonresponding member re-evaluates recruitment without auto-closing votes', () => {
+    const f = setup(); f.room.phase = 'execution';
+    f.run('open_check', { objective: 'access', action: 'plan', backup: 'backup', bonus: 2, creative: 0 });
+    const check = f.room.checks.at(-1)!;
+    execute(f.room, f.players[0]!, 'volunteer', { checkId: check.id, willing: true });
+    f.run('role', { memberId: f.players[1]!.id, role: 'spectator' });
+    expect(check.status).toBe('selected'); expect(check.leadId).toBe(f.players[0]!.id);
+  });
+  test('manual outcomes remain a complete authoritative override after later dice results', () => {
+    const f = setup(); f.room.phase = 'execution';
+    const override = { evacuated: 8, waiting: 4, observation: 0, isolation: 'pending', clinic: 'pending' };
+    f.run('override_tracks', { ...override, reason: 'Actual arrangements' });
+    const check = f.roll('isolation', 20); expect(check.result?.tier).toBe('boon');
+    expect(tracks(f.room)).toEqual(override);
+    f.run('correct_die', { checkId: check.id, die: 10, reason: 'Recounted' }); expect(tracks(f.room)).toEqual(override);
+  });
+  test('shared guards distinguish a closed tie from a completed vote and a saved draft from a complete handover', () => {
+    const f = setup(); f.room.phase = 'route_choice'; f.run('route_vote'); const poll = f.room.polls.at(-1)!;
+    execute(f.room, f.players[0]!, 'vote', { pollId: poll.id, option: 'high_line' });
+    execute(f.room, f.players[1]!, 'vote', { pollId: poll.id, option: 'quiet_water' });
+    f.run('close_vote', { pollId: poll.id }); expect(isPendingPoll(poll)).toBe(true);
+    f.run('resolve_tie', { pollId: poll.id, option: 'high_line', reason: 'Discussed' }); expect(isPendingPoll(poll)).toBe(false);
+    expect(handoverComplete({ statement: 'Ready', owner: '  ', nextUpdate: 'Later' })).toBe(false);
+    expect(handoverComplete({ statement: 'Ready', owner: 'Mira', nextUpdate: 'Later' })).toBe(true);
+  });
+});
+
+function startExecution(f: ReturnType<typeof setup>) {
+  f.run('next'); f.run('next'); f.run('next'); f.vote('both'); f.run('next'); f.vote('high_line'); f.run('next');
+}
 describe('save validation', () => {
   test('save round trips preserve action IDs, original and effective tiers, resources and reports', () => {
-    const f = setup(); f.room.phase = 'execution'; const c = f.roll('access', 7); f.vote('spend'); f.room.report.statement = 'Actual words';
+    const f = setup(); startExecution(f); const c = f.roll('access', 7); f.vote('spend'); f.room.report.statement = 'Actual words';
     const restored = validateArchive(JSON.parse(JSON.stringify({ format: 'green-light-save', version: 1, room: f.room })));
     expect(restored.checks[0]!.id).toBe(c.id); expect(restored.checks[0]!.result?.rawTier).toBe('twist'); expect(restored.checks[0]!.result?.tier).toBe('near_miss'); expect(restored.emergencyKits).toBe(1); expect(restored.report.statement).toBe('Actual words');
   });
+  test('cross-field validation rejects impossible stages, missing leads and invented preparation advantages', () => {
+    const f = setup(); startExecution(f); const check = f.roll('access', 10);
+    const archive = () => ({ format: 'green-light-save', version: 1, room: structuredClone(f.room) });
+    const noRoute = archive(); noRoute.room.route = null; expect(() => validateArchive(noRoute)).toThrow();
+    const earlyEnding = archive(); earlyEnding.room.phase = 'ending'; expect(() => validateArchive(earlyEnding)).toThrow();
+    const noEvidence = archive(); noEvidence.room.evidence = []; expect(() => validateArchive(noEvidence)).toThrow();
+    const invented = archive(); invented.room.checks[0]!.preparation = 2; invented.room.checks[0]!.result = settle(invented.room.checks[0]!, check.result!.die);
+    expect(() => validateArchive(invented)).toThrow();
+    const noLead = archive(); noLead.room.checks[0]!.leadId = null; expect(() => validateArchive(noLead)).toThrow();
+    expect(validateArchive(archive()).checks[0]!.id).toBe(check.id);
+  });
+  test('repeated route voting retains bounded history and still round trips through archive validation', () => {
+    const f = setup(); f.run('next'); f.run('next'); f.run('next'); f.vote('both'); f.run('next');
+    const firstId = f.room.polls.at(-1)!.id;
+    for (let i = 0; i < 305; i++) f.run('route_vote');
+    expect(f.room.polls).toHaveLength(300); expect(f.room.polls.some(p => p.id === firstId)).toBe(false);
+    expect(f.room.polls.at(-1)!.status).toBe('open');
+    expect(validateArchive({ format: 'green-light-save', version: 1, room: f.room }).polls).toHaveLength(300);
+  });
+  test('a full-mode preparation advantage is derived from its corresponding completed check', () => {
+    const f = setup('full'); f.run('next'); f.run('next');
+    f.roll('access', 10); f.roll('evacuation', 1); f.roll('isolation', 10);
+    f.run('next'); f.vote('both'); f.run('next'); f.vote('high_line'); f.run('next');
+    const prepared = f.roll('access', 10), unprepared = f.roll('evacuation', 10);
+    expect(prepared.preparation).toBe(2); expect(unprepared.preparation).toBe(0);
+    expect(validateArchive({ format: 'green-light-save', version: 1, room: f.room }).checks).toHaveLength(5);
+    unprepared.preparation = 2; unprepared.result = settle(unprepared, 10);
+    expect(() => validateArchive({ format: 'green-light-save', version: 1, room: f.room })).toThrow();
+  });
   test('reject future save versions and tampered resources or calculations', () => {
-    const f = setup(); expect(() => validateArchive({ format: 'green-light-save', version: 2, room: f.room })).toThrow();
-    f.room.phase = 'execution'; f.roll('access'); f.room.emergencyKits = 1; expect(() => validateArchive({ format: 'green-light-save', version: 1, room: f.room })).toThrow();
+    const f = setup(); expect(() => validateArchive({ format: 'green-light-save', version: 3, room: f.room })).toThrow();
+    startExecution(f); f.roll('access'); f.room.emergencyKits = 1; expect(() => validateArchive({ format: 'green-light-save', version: 1, room: f.room })).toThrow();
     f.room.emergencyKits = 2; f.room.checks[0]!.result!.dc = 20; expect(() => validateArchive({ format: 'green-light-save', version: 1, room: f.room })).toThrow();
   });
 });

@@ -68,7 +68,11 @@ SQLite is the authoritative save store. WebSocket connections deliver complete s
 
 Commands are persisted immediately. Broadcasts coalesce over a fixed 16 ms window per room and send the latest complete state; clients skip duplicate snapshots and batch reading-cache writes.
 
-Write commands have unique IDs. Database transactions save progress and deduplication records together. GM actions check the state version and return the latest state on a conflict; player votes and applications bind to specific IDs and can be submitted concurrently. See [architecture and protocol](docs/ARCHITECTURE.md) (Chinese).
+Write commands have unique IDs. Database transactions save progress and deduplication records together. GM actions check the state version and return the latest state on a conflict; player votes and applications bind to specific IDs and can be submitted concurrently. Reopening recruitment issues a new check ID so delayed commands cannot enter the new round. See [architecture and protocol](docs/ARCHITECTURE.md) (Chinese).
+
+The app retains the latest 300 voting rounds and 1,500 log entries. Local drafts survive room-tab and chapter changes, keep their original state version, and can be reviewed or exported from the draft tray. Save or export before leaving or reloading: these local drafts are not cross-device or persistent saves.
+
+Archives export as `green-light-save` v2 and import v1/v2. Recovery creates a new owner; historical identities keep their names and records without using any of the 40 active seats. Save files have a 32 MiB UTF-8 budget, including headroom for recovery metadata; ordinary write requests remain limited to 1 MiB. Over-budget changes are rejected without partial saves or silent text deletion. Keep database backups; see the [state-machine fixes and validation boundaries](docs/STATE_MACHINE_AUDIT.md) (Chinese).
 
 ## Checks
 
@@ -80,7 +84,7 @@ bun run build
 bun run verify
 ```
 
-Tests cover rules, idempotent resource use, permissions, ballot secrecy, SQLite restarts, complete playthroughs over HTTP, and real WebSocket disconnection and reconnection. The [QA record](docs/QA.md) (Chinese) distinguishes automated tests, browser checks, and environment checks that have not been performed.
+Tests cover rules, idempotent resource use, permissions, ballot secrecy, SQLite restarts, complete playthroughs over HTTP, and real WebSocket disconnection and reconnection. Isolated client and Svelte-script tests also cover delayed responses, reconnect lifetimes, draft remounts and save races. Recovery tests cover full rooms, legacy archives, large HTTP/WebSocket snapshots and UTF-8 byte boundaries; they do not replace browser interaction tests. The [QA record](docs/QA.md) (Chinese) distinguishes automated tests, browser checks, and environment checks that have not been performed.
 
 To benchmark concurrent votes over real HTTP / WebSocket connections with a temporary SQLite database:
 

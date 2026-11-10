@@ -2,6 +2,7 @@
   import Icon from './Icon.svelte';
   import { faCheck, faCheckToSlot, faLock, faScaleBalanced, faUsers } from '@fortawesome/free-solid-svg-icons';
   import type { RoomView, PublicPoll } from '../../shared/types';
+  import { memberName } from '../../shared/members';
   import { locale } from '../lib/i18n';
   import { command, busy, connection } from '../lib/client';
   let { game, poll, gm = false }: { game: RoomView; poll: PublicPoll; gm?: boolean } = $props();
@@ -22,7 +23,7 @@
     </button>
   {/each}</div>
   <div class="mt-[19px] flex justify-between gap-2.5 text-[10px] text-muted [&>span]:flex [&>span]:items-center [&>span]:gap-1.5 max-md:gap-2 max-md:text-[9px] max-md:[&_svg]:w-3"><span><Icon icon={faUsers} size={15} />{poll.voted.length} / {poll.eligible.length} {t('已投票', 'voted')}</span>{#if poll.status === 'open'}<span><Icon icon={faLock} size={13} />{t('选择暂未公开', 'Choices are hidden')}</span>{/if}</div>
-  <div class="mt-3 flex flex-wrap gap-[9px] max-md:gap-2.5">{#each poll.eligible as memberId}<span class="flex items-center gap-1 text-[9px] text-muted max-md:text-[10px]">{#if poll.voted.includes(memberId)}<Icon icon={faCheck} size={12} />{:else}<span class="block size-2 rounded-full border border-line"></span>{/if}{game.members.find(m => m.id === memberId)?.name}</span>{/each}</div>
+  <div class="mt-3 flex flex-wrap gap-[9px] max-md:gap-2.5">{#each poll.eligible as memberId}<span class="flex items-center gap-1 text-[9px] text-muted max-md:text-[10px]">{#if poll.voted.includes(memberId)}<Icon icon={faCheck} size={12} />{:else}<span class="block size-2 rounded-full border border-line"></span>{/if}{memberName(game, memberId)}</span>{/each}</div>
   {#if poll.status === 'open' && !eligible}<p class="field-hint">{t('此轮名单已确定。主持人与观察者不投票，新加入的玩家从下一轮参与。', 'This round’s roster is fixed. GMs and observers do not vote; newly joined players participate next round.')}</p>{/if}
   {#if poll.status === 'open'}<p class="mt-4 text-[12px] leading-[1.8] text-muted" role="status">{allVoted ? t('全员已投票，等待 GM 结束。结束前仍可更改选项。', 'Everyone has voted. Waiting for a GM to close. Choices can still be changed.') : t('由 GM 结束投票；结束前可随时更改选项。', 'A GM closes the vote. You can change your choice until then.')}</p>{/if}
   {#if gm && poll.status === 'open'}

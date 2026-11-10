@@ -15,6 +15,12 @@ bun run build
 | --- | --- |
 | 中英内容完整性、原剧本 ID / DC / 英文开场 | `tests/content.test.ts` |
 | 浏览器语言顺序、地区变体、实时切换与清理 | `tests/browser-locale.test.ts` |
+| 实际客户端的快照乱序、连接/身份代际、失效终态与命令重试（隔离 VM） | `tests/client.test.ts` |
+| 存档文件选择取消、反思按题草稿及提交版本（组件实际使用的 helper） | `tests/ui-drafts.test.ts` |
+| Room/Stage/Handover/People/Debrief 实际脚本的响应式、重建与保存竞态（无 DOM） | `tests/ui-state.test.ts` |
+| 房间级草稿、编辑版本、取消重开、身份与导航隔离 | `tests/room-drafts.test.ts` |
+| CheckPanel 实际脚本/模板绑定的计划、结果和骰点目标隔离及回调 | `tests/check-drafts.test.ts` |
+| 满员/旧版/连续恢复，大 HTTP/WS、UTF-8 字节预算与原子性 | `tests/archive-recovery.test.ts` |
 | 局域网 HTTP 下 UUID 回退 | `tests/ids.test.ts` |
 | Tailwind 主题、断点顺序、共享工具、无静态 CSS 与动画约定 | `tests/styles.test.ts` |
 | 五档结果、完整 / 精简流程、资源幂等、骰点更正、投票、存档校验 | `tests/engine.test.ts` |
@@ -25,6 +31,36 @@ bun run build
 | 真实 Vite HTTP / WebSocket 代理、局域网来源、跨来源拒绝及开发资料访问拒绝 | `tests/proxy.test.ts` |
 
 GitHub Actions 在 Linux amd64 / arm64 镜像构建中执行类型检查、测试和生产构建；PR 只验证，`main` 通过后发布镜像。构建流程见 [部署说明](DEPLOYMENT.md)。
+
+## 2026-11-10 合并主线同步优化并解决冲突
+
+- 将主线 `ca11f41` 的按房间 16 ms 广播合并、重复快照过滤、250 ms 缓存合并与 Windows 路径修复合入状态/恢复分支；README、架构与历史验证记录保留双方内容，不以选取单侧覆盖冲突。
+- 客户端先验证当前身份/连接代际及快照来源优先级，再执行去重与缓存排队；相同 revision 的迟到 HTTP 不覆盖实时在线名单，expired 不被前台/联网事件解除。忽略旧 revision 按房间 ID/成员身份判断，不能把房间码当作实例 ID。
+- 补充实际客户端组合回归：重复快照不重复更新 store，突发更新只缓存最后状态，后台/pagehide/disconnect 立即刷新且无延迟重复写，房间码复用时接纳新实例。缓存禁用用例同时验证延后写入失败不会破坏同身份重连。
+- Linux x64 / Bun 1.4.4：类型检查 0 错误、0 警告，185 项测试通过、0 失败，生产构建通过。`bun run benchmark:sync 4 20 2 memory` 冒烟完成；不以小规模冒烟更新此前 Windows 的性能测量或推断部署延迟。
+- 未重新执行 Windows、ARM64、Docker、真实浏览器/手机或反向代理验证；Vite 8 实验性支持提示仍存在。
+
+## 2026-11-10 R1–R3 修复闭环
+
+环境为 Linux x64 / Bun 1.4.4；未新增依赖，未改剧情或英文朗读。
+
+- R1：增加房间/身份级草稿仓库，实际编辑器跨页签和章节重建保留原稿/原 revision；保存成功只确认提交版本，取消重开、ABA 输入、不同检定/题目互不清稿。较早章节草稿有查看/导出入口，离开/刷新提示丢弃；真实降权清 GM 草稿，展示模式只隐藏计划并清私密笔记。
+- R2：恢复建立新房主，历史真实身份无 role、不占 40 个 active 席位。测试满 40 人 v1 文件恢复后加入 39 位新成员、补齐 GM、继续待完成检定，并保留姓名、ID、历史选票/行动/反思，旧令牌失败。导出 v2，读 v1/v2；数据库 v1 升级为 v2，旧 JSON/凭证兼容，阻止旧程序降级写新模型。
+- R3：普通 POST 仍限 1 MiB，文件 32 MiB、导入请求额外 1 KiB 包裹，以实际 UTF-8 字节检查；大文件导入/导出超时为 120 秒。真实 HTTP/WS 覆盖超过原 1 MiB 的归档，Content-Length/流式/Unicode/转义字节边界和失败回滚；写入前还预算最坏恢复版本，精确字节边界的档案连续恢复仍可导出。纯恢复上下文与未参与的临时房主席位可替换，不积累伪剧情记录。
+- `bun run check`：0 错误、0 警告；`bun test tests`：176 项通过、0 失败；`bun run build` 通过。Vite 8 实验性支持提示仍存在。脚本打包与大字节边界测试保留局部 15 秒上限，不放宽全局超时。
+- 新增边界/重建测试是实际脚本与受控 I/O，不是 DOM 或真实浏览器交互；未重新验证 Safari/Firefox、触屏、原生离页/确认/modal、长后台休眠、Windows、Docker、ARM64 或反向代理。32 MiB 不代表并发/慢网络性能保证；部署需按 [部署说明](DEPLOYMENT.md) 允许导入上传大小并保留升级前数据库备份。
+- 原问题及不变量的闭环详见 [状态机修复记录](STATE_MACHINE_AUDIT.md)。本机草稿不跨确认离开/刷新/设备持久化，容量保护也不承诺无限历史。
+
+## 2026-11-10 隐式状态机与测试盲区审查（初次）
+
+环境为 Linux x64 / Bun 1.4.4，未新增依赖或修改剧情、存档格式版本。
+
+- 修复重新招募的旧轮次命令 ABA、补救/更正入口不一致、名单缩减未抽选，以及存档阶段/准备优势来源校验缺口。投票历史按最近 300 轮保留，避免合法操作累积出导入数量上限之外的数据。
+- 新增隔离 VM 的实际客户端测试，先复现旧 HTTP/旧 socket 回写、身份切换后旧命令占锁、expired 被浏览器事件解除等问题，再验证生命周期保护；另覆盖同版本在线名单优先级、同身份无缓存重连和重试 ID。
+- 新增 Home/Debrief 实际 helper 的可控 Promise 测试，以及 Room/Stage 实际 script 的真实 Svelte effect/derived 测试，覆盖文件读取乱序、无效根值、反思草稿版本、降权笔记、复制焦点、二维码、朗读与旧设置版本。脚本测试替换 props/store 读取且不渲染 DOM，不作为完整组件或浏览器验收。
+- `bun run check` 通过，Svelte 诊断 0 错误、0 警告；`bun test tests` 136 项通过、0 失败；生产构建通过。Vite 8 实验性支持提示仍保留。新增客户端/脚本打包准备使用局部 15 秒上限，未跳过状态测试或改变全局超时。
+- 已复现但未修复：跨导航/远端阶段切换及部分编辑器回调的草稿风险；满员 40 人存档恢复后无法加入新成员；累计长理由可使合法导出超过 1 MB。当时记录的复现与约束见 [隐式状态机审查](STATE_MACHINE_AUDIT.md)，后续修复和新增回归见本页上方 R1–R3 闭环；136 项通过本身并不是当时问题已经解决的证据。
+- 本轮未执行真实浏览器联机、原生 dialog/焦点陷阱、Clipboard 权限、Safari/Firefox、触屏、后台休眠、Windows、Docker 或 ARM64 回归；历史记录不代表这些已重新验证。
 
 ## 2026-11-04 多人同步性能调查
 
@@ -98,7 +134,7 @@ GitHub Actions 在 Linux amd64 / arm64 镜像构建中执行类型检查、测�
 
 ## 平台与环境限制
 
-Windows / Bun 1.4.4 曾复现一项已有失败：`tests/server.test.ts` 的生产静态文件测试返回 400。该路径边界问题已在 2026-11-04 修复，当前 Windows 自动回归通过；历史记录仍保留当时结果。自动静态资源回归不等于完整 Windows 生产部署演练。
+Windows / Bun 1.4.4 曾复现一项已有失败：`tests/server.test.ts` 的生产静态文件测试返回 400。该路径边界问题已在 2026-11-04 修复，该版本的 Windows 自动回归通过；本次合并未重跑 Windows，不能把历史结果当成合并后全套验证。自动静态资源回归也不等于完整 Windows 生产部署演练。
 
 历史记录中 Docker Compose 配置与 Actions 语法做过静态校验；本次已实际验证 amd64 Docker 构建阶段和 ARM64/QEMU 样式单测，范围见上文。修复版完整双架构镜像构建、应用容器启动、Watchtower 更新和持久化恢复演练仍未完成。上线按部署说明确认健康检查、数据卷、WebSocket 和更新后恢复。
 

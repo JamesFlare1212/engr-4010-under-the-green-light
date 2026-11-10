@@ -37,6 +37,36 @@ test('command retries are idempotent for advancement, rolls and kit votes', () =
   f.send(f.host, 'close_vote', { pollId }, closeRevision, closeId); f.send(f.host, 'close_vote', { pollId }, closeRevision, closeId);
   expect(f.store.room(f.host.code).emergencyKits).toBe(1); expect(f.store.room(f.host.code).checks[0]!.result?.tier).toBe('near_miss');
 });
+test('recruitment rejects never-before-seen old-round commands even when their revisions allow concurrency', () => {
+  const f = fixture(), other = f.store.join(f.host.code, 'Other');
+  const room = f.store.room(f.host.code); room.phase = 'execution'; f.store.save(room);
+  f.send(f.host, 'open_check', { objective: 'access', action: 'plan', backup: 'backup', bonus: 2, creative: 0 });
+  const oldId = f.store.room(f.host.code).checks[0]!.id;
+  f.send(f.player, 'volunteer', { checkId: oldId, willing: true }); f.send(f.host, 'select_lead', { checkId: oldId });
+  const oldRevision = f.store.room(f.host.code).revision;
+  f.send(f.host, 'recruit_again', { checkId: oldId });
+  const freshId = f.store.room(f.host.code).checks[0]!.id;
+  expect(() => f.send(f.player, 'volunteer', { checkId: oldId, willing: true }, oldRevision)).toThrow();
+  f.send(other, 'volunteer', { checkId: freshId, willing: true }); f.send(f.host, 'select_lead', { checkId: freshId });
+  const selected = f.store.room(f.host.code);
+  expect(() => f.send(f.host, 'roll', { checkId: oldId, die: 20 }, oldRevision)).toThrow();
+  expect(f.store.room(f.host.code)).toEqual(selected);
+  f.send(f.host, 'roll', { checkId: freshId, die: 10 }, oldRevision);
+  expect(f.store.room(f.host.code).checks[0]).toMatchObject({ leadId: other.memberId, result: { die: 10 } });
+});
+test('failed multi-step commands roll back and do not claim their deduplication IDs', () => {
+  const f = fixture(), room = f.store.room(f.host.code); room.phase = 'route_choice'; f.store.save(room);
+  f.send(f.host, 'route_vote'); const pollId = f.store.room(f.host.code).polls.at(-1)!.id;
+  f.send(f.player, 'vote', { pollId, option: 'high_line' }); f.send(f.host, 'close_vote', { pollId });
+  f.send(f.host, 'role', { memberId: f.player.memberId, role: 'spectator' });
+  const before = f.store.room(f.host.code), commandId = crypto.randomUUID();
+  expect(() => f.send(f.host, 'route_vote', {}, before.revision, commandId)).toThrow();
+  expect(f.store.room(f.host.code)).toEqual(before);
+  expect(f.store.db.query('SELECT 1 FROM commands WHERE command_id = ?').get(commandId)).toBeNull();
+  f.send(f.host, 'role', { memberId: f.player.memberId, role: 'player' });
+  f.send(f.host, 'route_vote', {}, undefined, commandId);
+  expect(f.store.room(f.host.code).polls.at(-1)!.status).toBe('open');
+});
 test('player snapshots never expose GM context, private notes, other votes or session credentials', () => {
   const f = fixture(); const r = f.store.room(f.host.code); r.phase = 'route_choice'; r.gmNotes = 'SECRET GM NOTE'; f.store.save(r); const other = f.store.join(f.host.code, 'Other'); f.send(f.host, 'route_vote'); f.send(other, 'vote', { pollId: f.store.room(f.host.code).polls[0]!.id, option: 'high_line' });
   const room = f.store.room(f.host.code), view = f.store.view(room, f.player.memberId, []);
@@ -57,9 +87,23 @@ test('SQLite restarts preserve progress and sessions while imported rooms never 
   expect(store.authenticate(host.code, host.token).room.phase).toBe('briefing'); expect(store.authenticate(host.code, player.token).member.id).toBe(player.memberId);
   const imported = store.restore(archive, 'Restored GM'); expect(imported.code).not.toBe(host.code); expect(store.room(imported.code).phase).toBe('briefing'); expect(() => store.authenticate(imported.code, host.token)).toThrow();
 });
+test('database v1 upgrades without changing old JSON identities or session digests', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'green-light-migrate-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
+  const path = join(dir, 'game.sqlite'), old = new Store(path);
+  const host = old.create('Legacy GM', { mode: 'short', gmCount: 1, dice: 'physical' });
+  const legacy = old.room(host.code); delete (legacy as Partial<typeof legacy>).archivedMembers;
+  old.db.query('UPDATE rooms SET state=? WHERE code=?').run(JSON.stringify(legacy), host.code);
+  const credentials = old.db.query('SELECT * FROM sessions').all();
+  old.db.exec('PRAGMA user_version=1'); old.db.close();
+  const upgraded = new Store(path); cleanup.push(() => upgraded.db.close());
+  expect(upgraded.db.query('PRAGMA user_version').get()).toEqual({ user_version: 2 });
+  expect(upgraded.authenticate(host.code, host.token).room.archivedMembers).toEqual([]);
+  expect(upgraded.authenticate(host.code, host.token).member.id).toBe(host.memberId);
+  expect(upgraded.db.query('SELECT * FROM sessions').all()).toEqual(credentials);
+});
 test('reject writes to a newer database schema to prevent downgrades', () => {
   const dir = mkdtempSync(join(tmpdir(), 'green-light-version-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
-  const path = join(dir, 'game.sqlite'); const store = new Store(path); store.db.exec('PRAGMA user_version=2'); store.db.close();
+  const path = join(dir, 'game.sqlite'); const store = new Store(path); store.db.exec('PRAGMA user_version=3'); store.db.close();
   expect(() => new Store(path)).toThrow('Database schema is newer');
 });
 test('all members can generate handover drafts and save incomplete reports while private permissions remain separate', () => {
