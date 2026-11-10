@@ -61,7 +61,7 @@
 
 - socket generation 与提交 mutation 是不同生命周期。同身份联网重建连接不应自动丢失正在提交的命令；切换身份或显式恢复会使旧提交失效。
 - 通用 HTTP 解析函数不得无条件应用状态、弹出旧身份通知或改变新连接。所有异步副作用都在拥有该生命周期的调用方内执行。
-- 同版本不总表示相同在线名单。HTTP、socket、缓存的优先级必须测试，不能仅用 `< revision` 防倒退。
+- 同版本不总表示相同在线名单。HTTP、socket、缓存的优先级必须测试，不能仅用 `< revision` 防倒退。合并主线优化后，`sameSnapshot` 去重与 `snapshotCache` 延后写入必须位于身份/代际、实例 ID 和来源优先级检查之后；不能为了去重撤销实时在线名单或 expired 的保护。
 - HTTP 补取只恢复可读快照，不把连接标为 live。断线写入不排队；网络不确定时自动重试使用同一个命令 ID。
 - 取消异步工作不一定能取消 I/O；即使 File.text/Clipboard 的工作已经开始，过期结果也不能改变新选择、反馈或焦点。
 - 等待提交不意味着用户不能继续输入。成功回调只能确认提交时的草稿版本，不能无条件清空当前输入。
@@ -102,7 +102,7 @@
 | --- | --- | --- |
 | `tests/engine.test.ts` | 算式、跨状态补救、招募轮次、导入关系和长投票序列 | 不等于浏览器按钮/DOM 行为已经走通 |
 | `tests/store.test.ts` | 幂等、过期轮次拒绝、事务回滚、权限和报告并发 | 不覆盖组件卸载及本地弹窗草稿 |
-| `tests/client.test.ts` | 将实际 client 打包到隔离 VM，使用可控 fetch、socket、事件和时间测试乱序 | 不是真实网络、浏览器后台节流或长休眠验证；不修改其他测试使用的全局 WebSocket |
+| `tests/client.test.ts` | 实际 client 隔离 VM，覆盖请求乱序、实时在线名单、重复快照、缓存批写/离页刷新和实例更替 | 不是真实网络、浏览器后台节流或长休眠验证；不修改其他测试使用的全局 WebSocket |
 | `tests/ui-drafts.test.ts` | 组件实际使用的 Home/Debrief helper；可控 Promise、失败和版本 ABA | 不是完整组件挂载 |
 | `tests/room-drafts.test.ts` | 房间级编辑器重建、版本、取消重开、身份隔离、降权与导航守卫 | 不模拟原生 beforeunload/确认对话框 |
 | `tests/ui-state.test.ts` | 提取实际 Room/Stage/Handover/People/Debrief script，真实 Svelte effect/derived/store；阶段/页签重建、私密草稿和旧回调 | 不渲染 DOM，不验证焦点陷阱、原生 dialog、Clipboard 权限或布局 |

@@ -11,6 +11,7 @@
     "start": "bun server/index.ts",
     "check": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p tsconfig.server.json",
     "test": "bun test tests",
+    "benchmark:sync": "bun run tools/benchmark-sync.ts",
     "verify": "bun run check && bun test && bun run build"
   },
   "dependencies": {

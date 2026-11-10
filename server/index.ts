@@ -1,5 +1,5 @@
 import { type ServerWebSocket } from 'bun';
-import { resolve, extname } from 'node:path';
+import { resolve, extname, sep } from 'node:path';
 import { z } from 'zod';
 import { Store, commandSchema, databaseVersion } from './store';
 import { GameFault, parse, requireThat, settingsSchema, nameSchema } from './engine';
@@ -10,16 +10,31 @@ interface SocketData { code: string; memberId: string; token: string; lastSeen: 
 export function createApp(options: { db?: string; port?: number; hostname?: string; staticDir?: string } = {}) {
   const store = new Store(options.db ?? process.env.DATABASE_PATH ?? './data/green-light.sqlite');
   const clients = new Set<ServerWebSocket<SocketData>>();
+  const broadcasts = new Map<string, ReturnType<typeof setTimeout>>();
   let stopped = false;
   const rates = new Map<string, { start: number; count: number }>();
   const staticDir = resolve(options.staticDir ?? 'dist');
   function online(code: string) { return [...new Set([...clients].filter(ws => ws.data.authenticated && ws.data.code === code).map(ws => ws.data.memberId))]; }
   function broadcast(code: string) {
-    if (stopped) return;
-    const room = store.room(code); const present = online(code);
-    for (const ws of clients) if (ws.data.authenticated && ws.data.code === code) {
-      ws.send(JSON.stringify({ type: 'state', state: store.view(room, ws.data.memberId, present) }));
-    }
+    if (stopped || broadcasts.has(code)) return;
+    // Persist every command immediately, but send only the latest projection per short burst.
+    // A fixed window (rather than a trailing debounce) also bounds delay during sustained activity.
+    broadcasts.set(code, setTimeout(() => {
+      broadcasts.delete(code);
+      if (stopped) return;
+      const recipients = [...clients].filter(ws => ws.data.authenticated && ws.data.code === code);
+      if (!recipients.length) return;
+      const room = store.room(code); const present = online(code);
+      const messages = new Map<string, string>();
+      for (const ws of recipients) {
+        let message = messages.get(ws.data.memberId);
+        if (!message) {
+          message = JSON.stringify({ type: 'state', state: store.view(room, ws.data.memberId, present) });
+          messages.set(ws.data.memberId, message);
+        }
+        ws.send(message);
+      }
+    }, 16));
   }
   const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' } });
   function rate(key: string, max: number) {
@@ -122,7 +137,7 @@ export function createApp(options: { db?: string; port?: number; hostname?: stri
         if (req.method !== 'GET' && req.method !== 'HEAD') return new Response('Method not allowed', { status: 405 });
         const decoded = decodeURIComponent(url.pathname);
         const filePath = resolve(staticDir, `.${decoded}`);
-        requireThat(filePath.startsWith(`${staticDir}/`) || filePath === staticDir, '路径无效。', 'Invalid path.', 'path', 400);
+        requireThat(filePath.startsWith(`${staticDir}${sep}`) || filePath === staticDir, '路径无效。', 'Invalid path.', 'path', 400);
         let file = Bun.file(filePath);
         if (!extname(filePath) || !(await file.exists())) {
           if (extname(filePath) && extname(filePath) !== '.html') return new Response('Not found', { status: 404 });
@@ -166,7 +181,7 @@ export function createApp(options: { db?: string; port?: number; hostname?: stri
     for (const [key, value] of rates) if (Date.now() - value.start > 60_000) rates.delete(key);
   }, 5000);
   sweep.unref();
-  return { server, store, broadcast, stop: () => { stopped = true; clearInterval(sweep); for (const ws of clients) ws.close(1001, 'Server stopping'); clients.clear(); server.stop(true); store.db.close(); } };
+  return { server, store, broadcast, stop: () => { stopped = true; clearInterval(sweep); for (const timer of broadcasts.values()) clearTimeout(timer); broadcasts.clear(); for (const ws of clients) ws.close(1001, 'Server stopping'); clients.clear(); server.stop(true); store.db.close(); } };
 }
 if (import.meta.main) {
   const app = createApp();

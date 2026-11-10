@@ -16,11 +16,11 @@ function value<T>(store: { subscribe: (run: (value: T) => void) => () => void })
 const credentials = (code: string): Session => ({ code, token: `token-${code}`, memberId: `member-${code}`, name: 'GM' });
 function state(s: Session, revision = 1, online: string[] = []): RoomView {
   const room = newRoom(s.code, 'GM', { mode: 'short', gmCount: 1, dice: 'virtual' });
-  room.members[0]!.id = s.memberId; room.hostId = s.memberId;
+  room.id = `room-${s.code}`; room.members[0]!.id = s.memberId; room.hostId = s.memberId;
   return { ...room, revision, me: s.memberId, online, polls: [] };
 }
 async function flush() { for (let i = 0; i < 12; i++) await Promise.resolve(); }
-function browser() {
+function browser(cacheUnavailable = false) {
   let now = 0, nextTimer = 0;
   const timers = new Map<number, { at: number; repeat: number; callback: () => void }>();
   function timeout(callback: () => void, delay = 0, repeat = 0) {
@@ -52,8 +52,11 @@ function browser() {
     message(room: RoomView) { this.onmessage?.({ data: JSON.stringify({ type: 'state', state: room }) }); }
     close() { this.readyState = 3; timeout(() => this.onclose?.()); }
   }
-  const storage = new Map<string, string>();
-  const localStorage = { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, data: string) => { storage.set(key, data); } };
+  const storage = new Map<string, string>(), writes: { key: string; data: string }[] = [];
+  const localStorage = {
+    getItem(key: string) { if (cacheUnavailable && key.startsWith('green-light:cache:')) throw new Error('Cache unavailable'); return storage.get(key) ?? null; },
+    setItem(key: string, data: string) { if (cacheUnavailable && key.startsWith('green-light:cache:')) throw new Error('Cache unavailable'); storage.set(key, data); writes.push({ key, data }); }
+  };
   const window = new EventTarget();
   const document = Object.assign(new EventTarget(), { visibilityState: 'visible' });
   const requests: { url: string; init: RequestInit; resolve: (response: Response) => void; reject: (error: Error) => void }[] = [];
@@ -75,7 +78,7 @@ function browser() {
   async function live(s = credentials('1234')) {
     save(s); await client.resume(s.code); const ws = sockets.at(-1)!; ws.open(); ws.message(state(s)); return { s, ws };
   }
-  return { client, sockets, requests, window, document, storage, save, reply, live, advance };
+  return { client, sockets, requests, window, document, storage, writes, save, reply, live, advance };
 }
 
 test('a delayed initial HTTP response cannot erase presence delivered by the same live socket', async () => {
@@ -89,7 +92,7 @@ test('a delayed initial HTTP response cannot erase presence delivered by the sam
 });
 
 test('manual reconnect retains readable state for the same identity even without a usable cache', async () => {
-  const b = browser(), { s } = await b.live(); b.storage.delete(`green-light:cache:${s.code}`);
+  const b = browser(true), { s } = await b.live(); b.storage.delete(`green-light:cache:${s.code}`);
   await b.client.resume(s.code);
   expect(value(b.client.room)?.me).toBe(s.memberId); expect(value(b.client.connection)).toBe('connecting');
   expect(await b.client.command('clock')).toBe(false);
@@ -106,6 +109,39 @@ test('archive export also allows the longer transfer deadline', async () => {
   const b = browser(); await b.live(); const pending = b.client.downloadSave();
   b.advance(13_000); expect(b.requests[1]!.init.signal?.aborted).toBe(false);
   b.requests[1]!.reject(new Error('End controlled export')); await pending;
+});
+
+test('duplicate snapshots skip store updates while newer states share one delayed cache write', async () => {
+  const b = browser(), { s, ws } = await b.live(), current = value(b.client.room)!;
+  let updates = 0; const stop = b.client.room.subscribe(() => { updates++; });
+  ws.message(structuredClone(current)); expect(updates).toBe(1);
+  ws.message({ ...current, revision: 2 }); ws.message({ ...current, revision: 3 }); expect(updates).toBe(3);
+  const cached = () => b.writes.filter(write => write.key.startsWith('green-light:cache:'));
+  b.advance(249); expect(cached()).toHaveLength(0);
+  b.advance(1); expect(cached()).toHaveLength(1);
+  expect(JSON.parse(b.storage.get(`green-light:cache:${s.code}`)!).revision).toBe(3); stop();
+});
+
+test('hidden, pagehide and disconnect flush the latest accepted snapshot without delayed duplicate writes', async () => {
+  const b = browser(), { s, ws } = await b.live(), current = value(b.client.room)!;
+  const cached = () => b.writes.filter(write => write.key.startsWith('green-light:cache:'));
+  ws.message({ ...current, revision: 2 }); b.document.visibilityState = 'hidden'; b.document.dispatchEvent(new Event('visibilitychange'));
+  expect(cached()).toHaveLength(1); b.advance(250); expect(cached()).toHaveLength(1);
+  ws.message({ ...current, revision: 3 }); b.window.dispatchEvent(new Event('pagehide'));
+  expect(cached()).toHaveLength(2);
+  ws.message({ ...current, revision: 4 }); b.client.disconnect(); expect(cached()).toHaveLength(3);
+  b.advance(250); expect(cached()).toHaveLength(3);
+  expect(JSON.parse(b.storage.get(`green-light:cache:${s.code}`)!).revision).toBe(4);
+});
+
+test('a same-code replacement room is not discarded as an old or equal-revision HTTP snapshot', async () => {
+  const b = browser(); await b.live(); const current = value(b.client.room)!;
+  b.document.dispatchEvent(new Event('visibilitychange'));
+  await b.reply(1, { state: { ...current, id: 'replacement-room', online: ['replacement'] } });
+  expect(value(b.client.room)?.id).toBe('replacement-room');
+  expect(value(b.client.room)?.online).toEqual(['replacement']);
+  b.sockets[0]!.message({ ...current, id: 'another-replacement', revision: 0 });
+  expect(value(b.client.room)?.revision).toBe(0);
 });
 
 test('an old HTTP snapshot cannot overwrite equal-revision presence after reconnecting', async () => {

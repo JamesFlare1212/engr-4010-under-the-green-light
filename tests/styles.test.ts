@@ -6,7 +6,7 @@ import { parse } from 'svelte/compiler';
 
 const root = resolve(import.meta.dir, '..');
 const stylesheet = readFileSync(resolve(root, 'src/app.css'), 'utf8');
-const componentPaths = [...new Bun.Glob('src/**/*.svelte').scanSync({ cwd: root })].sort();
+const componentPaths = [...new Bun.Glob('src/**/*.svelte').scanSync({ cwd: root })].map(path => path.replaceAll('\\', '/')).sort();
 const components = new Map<string, { source: string; ast: ReturnType<typeof parse> }>();
 // Give each component its own budget for slow ARM64/QEMU builds.
 const componentTimeout = 15_000;

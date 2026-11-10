@@ -2,6 +2,7 @@ import { writable, get } from 'svelte/store';
 import { bi, type RoomView, type Session, type Text, type Settings, type Command } from '../../shared/types';
 import { uuid } from '../../shared/ids';
 import { confirmDraftNavigation } from './room-drafts';
+import { sameSnapshot, snapshotCache } from './snapshots';
 export const room = writable<RoomView | null>(null);
 export const session = writable<Session | null>(null);
 export const connection = writable<'connecting' | 'live' | 'offline' | 'expired'>('connecting');
@@ -16,6 +17,7 @@ let generation = 0;
 let mutation = 0;
 let attempts = 0;
 let lastPong = 0;
+const cache = snapshotCache(value => localStorage.setItem(`green-light:cache:${value.code}`, JSON.stringify(value)));
 export function savedSessions(): Session[] {
   try { return Object.values(JSON.parse(localStorage.getItem('green-light:sessions') ?? '{}')); } catch { return []; }
 }
@@ -26,11 +28,13 @@ function persist(s: Session) {
 function snapshot(value: RoomView, source: 'http' | 'socket' | 'cache' = 'http') {
   const current = get(room);
   if (value.code !== get(session)?.code || value.me !== get(session)?.memberId) return;
-  if (current && current.code === value.code && current.revision > value.revision) return;
+  const sameIdentity = current?.id === value.id && current.me === value.me;
+  if (sameIdentity && current.revision > value.revision) return;
   // Presence changes do not increment revision. A late HTTP response must not replace live presence.
-  if (source === 'http' && get(connection) === 'live' && current?.revision === value.revision) return;
+  if (source === 'http' && get(connection) === 'live' && sameIdentity && current.revision === value.revision) return;
+  if (sameSnapshot(current, value)) return;
   room.set(value);
-  try { localStorage.setItem(`green-light:cache:${value.code}`, JSON.stringify(value)); } catch { /* Network state remains authoritative. */ }
+  cache.queue(value);
 }
 class ApiError extends Error { constructor(public status: number, public text: Text, public state?: RoomView) { super(text.en); } }
 async function request(path: string, init: RequestInit = {}, timeout = 12_000) {
@@ -154,6 +158,7 @@ export async function command(type: string, payload: Record<string, unknown> = {
   } finally { if (current()) busy.set(false); }
 }
 export function disconnect() {
+  cache.flush();
   generation++; clearTimeout(reconnect); clearInterval(heartbeat); clearInterval(fallback); fallback = undefined;
   if (socket) { socket.onclose = null; socket.close(); socket = null; }
 }
@@ -212,4 +217,5 @@ export async function copy(text: string, notify = true): Promise<boolean> {
   return false;
 }
 window.addEventListener('online', () => { const s = get(session); if (s && get(connection) !== 'expired') { disconnect(); connect(s); } });
-document.addEventListener('visibilitychange', () => { const s = get(session); if (s && get(connection) !== 'expired' && document.visibilityState === 'visible') { if (!socket || socket.readyState > 1) { disconnect(); connect(s); } else refresh(s); } });
+window.addEventListener('pagehide', () => cache.flush());
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') cache.flush(); const s = get(session); if (s && get(connection) !== 'expired' && document.visibilityState === 'visible') { if (!socket || socket.readyState > 1) { disconnect(); connect(s); } else refresh(s); } });
