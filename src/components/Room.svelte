@@ -1,13 +1,16 @@
 <script lang="ts">
   import Icon from './Icon.svelte';
   import { faBookOpen, faBoxOpen, faCheck, faChevronRight, faClockRotateLeft, faCodeBranch, faCopy, faDownload, faEye, faFolderOpen, faLanguage, faPause, faPenToSquare, faPlay, faPlugCircleXmark, faRightFromBracket, faShareNodes, faShieldHalved, faSpinner, faTowerBroadcast, faUsers, faWifi, faXmark } from '@fortawesome/free-solid-svg-icons';
-  import { onMount, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
   import QRCode from 'qrcode';
   import type { RoomView } from '../../shared/types';
+  import { bi } from '../../shared/types';
+  import { createRoomDrafts, draftText, guardDraftNavigation } from '../lib/room-drafts';
   import { phases } from '../../shared/types';
+  import { memberName } from '../../shared/members';
   import { phaseLabels, tracks, isolationLabels } from '../../shared/content';
   import { locale } from '../lib/i18n';
-  import { command, busy, connection, leave, resume, downloadSave, copy } from '../lib/client';
+  import { command, busy, connection, leave, resume, downloadSave, download, copy } from '../lib/client';
   import Brand from './Brand.svelte';
   import Stage from './Stage.svelte';
   import Evidence from './Evidence.svelte';
@@ -15,13 +18,18 @@
   import People from './People.svelte';
   let { game }: { game: RoomView } = $props();
   let tab = $state('story'), presenting = $state(false), now = $state(Date.now());
-  let shareDialog: HTMLDialogElement, notesDialog: HTMLDialogElement;
+  let shareDialog: HTMLDialogElement;
+  let notesDialog = $state<HTMLDialogElement>();
   let joinInput: HTMLInputElement;
   let joinUrl = $state(untrack(() => `${location.origin}/room/${game.code}`)), qr = $state(''), qrError = $state(false);
   let copyStatus = $state<'idle' | 'copying' | 'copied' | 'manual'>('idle');
-  let notesDraft = $state(''), notesRevision = $state(0);
+  let copyGeneration = 0;
+  const roomDrafts = createRoomDrafts(() => game);
+  const notesEditor = roomDrafts.editor('gm:notes', () => '', untrack(() => game.revision), bi('私密笔记', 'Private notes'));
+  const notesDraft = $derived($notesEditor.value), notesRevision = $derived($notesEditor.revision);
   const me = $derived(game.members.find(m => m.id === game.me)!);
   const gm = $derived(me.role === 'gm' && !presenting);
+  const localDrafts = $derived($roomDrafts.filter(entry => gm || !entry.key.startsWith('gm:')));
   const status = $derived(tracks(game));
   const currentPhase = $derived(game.phase);
   const locked = $derived($busy || $connection !== 'live');
@@ -32,24 +40,43 @@
     { id: 'flow', icon: faCodeBranch, zh: '进度与分叉', en: 'The path' }, { id: 'people', icon: faUsers, zh: '救援成员', en: 'The team' }, { id: 'history', icon: faClockRotateLeft, zh: '行动记录', en: 'Activity' }
   ];
   $effect(() => {
-    const url = joinUrl; qrError = false; let cancelled = false;
+    const url = joinUrl; qr = ''; qrError = false; let cancelled = false;
     if (/^https?:\/\//.test(url)) QRCode.toDataURL(url, { width: 240, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#173e48', light: '#ffffff' } }).then(value => { if (!cancelled) qr = value; }).catch(() => { if (!cancelled) qrError = true; });
     else { qr = ''; qrError = true; }
     return () => { cancelled = true; };
   });
   onMount(() => { const timer = setInterval(() => now = Date.now(), 1000); return () => clearInterval(timer); });
-  $effect(() => { joinUrl; copyStatus = 'idle'; });
+  $effect(() => { joinUrl; copyGeneration++; copyStatus = 'idle'; });
+  $effect(() => {
+    if (!gm) notesDialog?.close();
+    if (me.role !== 'gm') roomDrafts.clearGm();
+    else if (!gm) notesEditor.clear();
+  });
+  onMount(() => {
+    const stopGuard = guardDraftNavigation(() => !$roomDrafts.length || window.confirm(t('本机还有未提交草稿。离开会丢弃这些草稿，是否继续？', 'You have unsubmitted local drafts. Leave and discard them?')));
+    const warn = (event: BeforeUnloadEvent) => { if ($roomDrafts.length) { event.preventDefault(); event.returnValue = ''; } };
+    window.addEventListener('beforeunload', warn);
+    return () => { stopGuard(); window.removeEventListener('beforeunload', warn); };
+  });
   $effect(() => { currentPhase; if (tab === 'story') window.scrollTo({ top: 0 }); });
   function navigate(nextTab: string) { tab = nextTab; window.scrollTo({ top: 0 }); }
-  function share() { copyStatus = 'idle'; shareDialog.showModal(); }
+  onDestroy(() => { copyGeneration++; roomDrafts.dispose(); });
+  function resetCopy() { copyGeneration++; copyStatus = 'idle'; }
+  function share() { resetCopy(); shareDialog.showModal(); }
   async function copyInvite() {
     if (copyStatus === 'copying') return;
-    const value = joinUrl;
+    const value = joinUrl, operation = ++copyGeneration;
     copyStatus = 'copying';
-    const copied = await copy(value);
-    if (joinUrl !== value) return;
+    const copied = await copy(value, false);
+    if (operation !== copyGeneration || !shareDialog.open || joinUrl !== value) return;
     copyStatus = copied ? 'copied' : 'manual';
     if (!copied) { joinInput.focus({ preventScroll: true }); joinInput.select(); joinInput.setSelectionRange(0, value.length); }
+  }
+  function openNotes() { notesEditor.begin(game.gmNotes ?? '', game.revision); notesDialog?.showModal(); }
+  function cancelNotes() { notesEditor.cancel(); notesDialog?.close(); }
+  async function saveNotes(event: SubmitEvent) {
+    event.preventDefault(); if (locked || notesRevision !== game.revision) return;
+    if (await notesEditor.save((text, revision) => command('notes', { text }, revision)) && !$notesEditor.editing) notesDialog?.close();
   }
 </script>
 
@@ -72,6 +99,8 @@
     <div class="sticky top-[72px] z-29 flex items-center gap-[13px] bg-warning-bg px-[26px] py-[13px] text-[12px] text-warning-text max-md:top-[61px] max-md:gap-[9px] max-md:px-[15px] max-md:py-[11px] max-md:text-[10px] max-md:leading-[1.7]" role="status"><Icon icon={faPlugCircleXmark} size={17} /><span class="flex-1">{$connection === 'expired' ? t('登录身份已失效。请返回首页重新加入。', 'Your session has expired. Return home and join again.') : t('连接中断时仍可查看已同步内容。连接恢复后自动更新，操作暂时暂停。', 'Synced content is still available. Actions pause until the connection recovers and game updates automatically.')}</span><button class="rounded-[5px] border border-warning-line bg-transparent p-2 whitespace-nowrap text-inherit max-md:p-1.5 max-md:text-[9px]" onclick={() => $connection === 'expired' ? leave() : resume(game.code)}>{$connection === 'expired' ? t('返回首页', 'Return home') : t('立即重连', 'Reconnect now')}</button></div>
   {/if}
 
+  {#if localDrafts.length}<details class="mx-auto my-3 max-w-[1200px] rounded-lg border border-warning-line bg-warning-bg p-4 text-warning-text"><summary class="cursor-pointer text-sm">{t('本机未提交草稿', 'Unsubmitted local drafts')} · {localDrafts.length}</summary><p class="mt-2 text-xs">{t('切换房间页签和章节会保留草稿及原版本。较早章节的草稿可在此查看或导出；不会自动覆盖共享内容。离开房间或刷新前请保存或导出。', 'Tabs and chapters retain drafts and their original versions. Review or export earlier drafts here; they never overwrite shared content automatically. Save or export before leaving or reloading.')}</p>{#each localDrafts as entry}<article class="mt-3 border-t border-warning-line pt-3"><h3 class="text-sm">{entry.label[$locale]}</h3><pre class="my-2 max-h-48 overflow-auto text-xs wrap-anywhere whitespace-pre-wrap">{draftText(entry, $locale)}</pre><button class="btn secondary" onclick={() => download(draftText(entry, $locale), `draft-${game.code}.txt`, 'text/plain')}>{t('导出此草稿', 'Export this draft')}</button></article>{/each}</details>{/if}
+
   <div class="mx-auto grid max-w-[1920px] grid-cols-[222px_minmax(0,1fr)_246px] min-[1700px]:grid-cols-[250px_minmax(0,1fr)_275px] max-xl:grid-cols-[205px_minmax(0,1fr)] max-lg:grid-cols-[180px_minmax(0,1fr)] max-md:block">
     <aside class="sticky top-[72px] flex h-[calc(100svh-72px)] flex-col self-start overflow-y-auto border-r border-line bg-sidebar px-[18px] pt-7 min-[1700px]:px-[25px] max-lg:px-3 max-lg:pt-6 max-md:static max-md:contents max-md:h-auto max-md:p-0">
       <div class="px-3 pb-6 max-lg:px-2.5 max-md:hidden"><span class="tiny-tag text-[9px]">Guardians Guild</span><h2 class="mt-[9px] text-[19px] leading-[1.4] max-lg:text-[16px]">{t('绿灯之下', 'Under the Green Light')}</h2><span class="mt-2 flex items-center gap-[7px] text-[10px] text-muted">{game.settings.mode === 'full' ? t('完整剧本', 'Full story') : t('精简剧本', 'Short story')}<i class="size-[3px] rounded-full bg-offline-dot"></i>{game.settings.gmCount === 2 ? 'Co-GM' : `${game.settings.gmCount} GM`}</span></div>
@@ -93,13 +122,13 @@
     <main id="main" class="mx-auto w-full min-w-0 max-w-[1300px] px-[clamp(22px,3vw,52px)] pt-[37px] pb-5 min-[1700px]:pt-[50px] max-xl:px-[30px] max-xl:py-7 max-lg:px-[23px] max-md:max-w-[700px] max-md:px-5 max-md:pt-[22px] max-md:pb-[90px] max-[360px]:px-4">
       <div class="sr-only" role="status">{t('当前阶段：', 'Current stage: ')}{phaseLabels[game.phase][$locale]}</div>
       <div class="hidden max-xl:mb-[25px] max-xl:flex max-xl:justify-between max-xl:gap-3.5 max-xl:border-b max-xl:border-line max-xl:pb-[18px] max-xl:text-[10px] max-xl:text-muted [&>span]:flex [&>span]:items-center [&>span]:gap-1.5 max-md:mb-[23px] max-md:gap-[7px] max-md:pb-[17px] max-md:text-[9px] max-md:[&>span]:gap-[5px]"><span><Icon icon={faUsers} size={14} />{status.evacuated}/12 {t('已撤离', 'evacuated')}</span><span><Icon icon={faBoxOpen} size={14} />{game.emergencyKits} {t('份物资', 'kits')}</span><span>{game.settings.dice === 'virtual' ? t('虚拟 D20', 'Virtual D20') : t('实体 D20', 'Physical D20')}</span></div>
-      <details class="hidden max-xl:-mt-2 max-xl:mb-[25px] max-xl:block max-xl:text-[11px] max-xl:text-muted"><summary class="min-h-8 cursor-pointer leading-8">{me.name} · {t('房间工具', 'Room tools')}</summary><div class="mt-2.5 flex flex-wrap items-center gap-2 [&_.btn]:max-md:text-[12px]">{#if me.role === 'gm'}<button class="btn secondary" onclick={() => presenting = !presenting}><Icon icon={faEye} size={15} />{presenting ? t('返回主持视图', 'Return to GM view') : t('玩家展示', 'Player view')}</button>{/if}{#if gm}<button class="btn secondary" onclick={() => { notesDraft = game.gmNotes ?? ''; notesRevision = game.revision; notesDialog.showModal(); }}><Icon icon={faPenToSquare} size={15} />{t('私密笔记', 'Private notes')}</button><button class="btn secondary" onclick={downloadSave}><Icon icon={faDownload} size={15} />{t('完整存档', 'Full save')}</button><button class="btn secondary" disabled={locked} onclick={() => command('clock')}>{game.clock.runningSince ? t('暂停计时', 'Pause timer') : t('继续计时', 'Resume timer')}</button>{/if}<button class="btn secondary" onclick={leave}><Icon icon={faRightFromBracket} size={15} />{t('返回首页', 'Return home')}</button></div></details>
-      {#if tab === 'story'}{#key game.phase}<Stage {game} {gm} onshare={share} />{/key}
+      <details class="hidden max-xl:-mt-2 max-xl:mb-[25px] max-xl:block max-xl:text-[11px] max-xl:text-muted"><summary class="min-h-8 cursor-pointer leading-8">{me.name} · {t('房间工具', 'Room tools')}</summary><div class="mt-2.5 flex flex-wrap items-center gap-2 [&_.btn]:max-md:text-[12px]">{#if me.role === 'gm'}<button class="btn secondary" onclick={() => presenting = !presenting}><Icon icon={faEye} size={15} />{presenting ? t('返回主持视图', 'Return to GM view') : t('玩家展示', 'Player view')}</button>{/if}{#if gm}<button class="btn secondary" onclick={openNotes}><Icon icon={faPenToSquare} size={15} />{t('私密笔记', 'Private notes')}</button><button class="btn secondary" onclick={downloadSave}><Icon icon={faDownload} size={15} />{t('完整存档', 'Full save')}</button><button class="btn secondary" disabled={locked} onclick={() => command('clock')}>{game.clock.runningSince ? t('暂停计时', 'Pause timer') : t('继续计时', 'Resume timer')}</button>{/if}<button class="btn secondary" onclick={leave}><Icon icon={faRightFromBracket} size={15} />{t('返回首页', 'Return home')}</button></div></details>
+      {#if tab === 'story'}{#key game.phase}<Stage {game} {gm} {roomDrafts} onshare={share} />{/key}
       {:else if tab === 'evidence'}<Evidence {game} />
       {:else if tab === 'flow'}<Flow {game} />
-      {:else if tab === 'people'}<People {game} {gm} />
+      {:else if tab === 'people'}<People {game} {gm} {roomDrafts} />
       {:else}<div class="section-title"><div><h1>{t('每一步都有记录', 'A record of every step')}</h1><p>{t('决定、更正与实际后果，按时间保留。', 'Decisions, corrections and fictional outcomes stay in chronological order.')}</p></div>{#if gm}<button class="btn secondary" onclick={downloadSave}><Icon icon={faDownload} size={16} />{t('完整存档', 'Full save')}</button>{/if}</div><ol class="m-0 list-none py-[5px]">
-        {#each [...game.logs].reverse() as entry}<li class="relative flex gap-5 pb-7 before:absolute before:top-3 before:bottom-0 before:left-[5px] before:w-px before:bg-line before:content-[''] last:before:hidden max-md:gap-[15px]"><span class="relative z-1 mt-[7px] size-[11px] shrink-0 rounded-full border-2 border-border-hover bg-badge"></span><div><p class="text-[12px] leading-[1.85] wrap-anywhere text-muted">{entry.text[$locale]}</p><small class="mt-2 flex gap-[9px] text-[9px] text-muted max-md:text-[10px]">{game.members.find(m => m.id === entry.actorId)?.name ?? t('系统', 'System')}<span>·</span><time datetime={new Date(entry.at).toISOString()}>{new Date(entry.at).toLocaleTimeString($locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time></small></div></li>{/each}
+        {#each [...game.logs].reverse() as entry}<li class="relative flex gap-5 pb-7 before:absolute before:top-3 before:bottom-0 before:left-[5px] before:w-px before:bg-line before:content-[''] last:before:hidden max-md:gap-[15px]"><span class="relative z-1 mt-[7px] size-[11px] shrink-0 rounded-full border-2 border-border-hover bg-badge"></span><div><p class="text-[12px] leading-[1.85] wrap-anywhere text-muted">{entry.text[$locale]}</p><small class="mt-2 flex gap-[9px] text-[9px] text-muted max-md:text-[10px]">{memberName(game, entry.actorId, t('系统', 'System'))}<span>·</span><time datetime={new Date(entry.at).toISOString()}>{new Date(entry.at).toLocaleTimeString($locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time></small></div></li>{/each}
       </ol>{/if}
       <footer class="mt-10 flex justify-between gap-5 border-t border-line pt-5 text-[9px] text-muted max-md:mt-[35px] max-md:flex-col max-md:gap-2 max-md:text-[8px]"><span>Heliora Prime · The Shell</span><span class="max-md:hidden">{t('保护生命，忠诚协作，如实沟通。', 'Protect life. Work together. Speak truthfully.')}</span></footer>
     </main>
@@ -111,15 +140,15 @@
       <div class="border-b border-line py-5"><span class="flex items-center gap-2 text-[11px] text-muted"><Icon icon={faShieldHalved} size={16} />{t('设施隔离', 'Facility isolation')}</span><strong class="mt-[11px] block text-[12px] font-medium text-muted">{isolationLabels[status.isolation][$locale]}</strong></div>
       <div class="pt-[18px] pb-[22px]"><div class="flex items-center justify-between text-[10px] text-muted"><span>{t('课堂用时', 'Session time')}</span>{#if gm}<button class="flex border-0 bg-transparent p-2 text-muted" disabled={locked} onclick={() => command('clock')} aria-label={game.clock.runningSince ? t('暂停课堂计时', 'Pause session timer') : t('继续课堂计时', 'Resume session timer')}>{#if game.clock.runningSince}<Icon icon={faPause} size={15} />{:else}<Icon icon={faPlay} size={15} />{/if}</button>{/if}</div><strong class="mt-0.5 block text-[27px] font-normal tracking-[.04em] tabular-nums">{String(Math.floor(elapsed / 60)).padStart(2,'0')}<span class="opacity-50">:</span>{String(elapsed % 60).padStart(2,'0')}</strong><p class="mt-3 text-[9px] text-muted">{t('独立于故事中的十二分钟。', 'Separate from the fictional twelve minutes.')}</p></div>
       <div class="flex items-start gap-2 pt-3 pb-5 text-muted"><Icon icon={faShieldHalved} size={18} /><p class="text-[9px] leading-[1.7]">{t('避难室保障约两小时。诊所独立备用供电 20 分钟。', 'Refuge: roughly two hours of protection. Clinic: 20-minute independent backup.')}</p></div>
-      {#if gm}<button class="flex min-h-[38px] w-full items-center gap-[9px] border-0 bg-transparent py-2 text-left text-[10px] text-muted hover:text-green" onclick={() => { notesDraft = game.gmNotes ?? ''; notesRevision = game.revision; notesDialog.showModal(); }}><Icon icon={faPenToSquare} size={16} />{t('主持人私密笔记', 'Private GM notes')}</button><button class="flex min-h-[38px] w-full items-center gap-[9px] border-0 bg-transparent py-2 text-left text-[10px] text-muted hover:text-green" onclick={downloadSave}><Icon icon={faDownload} size={16} />{t('导出完整存档', 'Export full save')}</button>{/if}
+      {#if gm}<button class="flex min-h-[38px] w-full items-center gap-[9px] border-0 bg-transparent py-2 text-left text-[10px] text-muted hover:text-green" onclick={openNotes}><Icon icon={faPenToSquare} size={16} />{t('主持人私密笔记', 'Private GM notes')}</button><button class="flex min-h-[38px] w-full items-center gap-[9px] border-0 bg-transparent py-2 text-left text-[10px] text-muted hover:text-green" onclick={downloadSave}><Icon icon={faDownload} size={16} />{t('导出完整存档', 'Export full save')}</button>{/if}
     </aside>
   </div>
 </div>
 
-<dialog bind:this={shareDialog} class="max-md:px-5 max-md:py-6">
+<dialog bind:this={shareDialog} onclose={resetCopy} class="max-md:px-5 max-md:py-6">
   <div class="flex items-center justify-between gap-[15px]"><h2 class="text-[22px] max-md:text-[21px]">{t('邀请同伴加入', 'Invite your teammates')}</h2><button class="-my-1.5 -mr-1.5 ml-0 flex border-0 bg-transparent p-2.5 text-muted" onclick={() => shareDialog.close()} aria-label={t('关闭邀请', 'Close invitation')}><Icon icon={faXmark} size={21} /></button></div>
   <p class="mt-[13px] text-[12px] text-muted">{t('扫描二维码，或输入四位房间码。', 'Scan the QR code or enter the four-digit code.')}</p>
-  <div class="mx-auto mt-[25px] flex size-60 items-center justify-center overflow-hidden rounded-[9px] border border-evidence-line bg-white">{#if qr && !qrError}<img src={qr} width="240" height="240" alt={t('加入房间的二维码', 'QR code to join the room')} />{:else}<p class="p-5 text-[12px] text-[#526b59]">{t('请填写有效的 http / https 加入地址。', 'Enter a valid http / https invitation address.')}</p>{/if}</div>
+  <div class="mx-auto mt-[25px] flex size-60 items-center justify-center overflow-hidden rounded-[9px] border border-evidence-line bg-white">{#if qr && !qrError}<img src={qr} width="240" height="240" alt={t('加入房间的二维码', 'QR code to join the room')} />{:else}<p class="p-5 text-[12px] text-[#526b59]">{qrError ? t('请填写有效的 http / https 加入地址。', 'Enter a valid http / https invitation address.') : t('正在生成二维码…', 'Generating QR code…')}</p>{/if}</div>
   <div class="mt-3.5 pl-[.4em] text-center text-[37px] tracking-[.4em] text-muted">{game.code}</div>
   <label for="join-url">{t('加入链接', 'Invitation link')}</label>
   <div class="flex gap-2"><input class="text-[11px] max-md:text-[12px]" id="join-url" bind:this={joinInput} bind:value={joinUrl} type="url" /><button class="btn secondary" onclick={copyInvite} disabled={copyStatus === 'copying'} aria-label={t('复制加入链接', 'Copy invitation link')}>{#if copyStatus === 'copied'}<Icon icon={faCheck} size={18} />{:else}<Icon icon={faCopy} size={18} />{/if}</button></div>
@@ -127,8 +156,8 @@
   <button class="btn primary mt-5 w-full" onclick={copyInvite} disabled={copyStatus === 'copying'} aria-busy={copyStatus === 'copying'}>{#if copyStatus === 'copied'}<Icon icon={faCheck} size={17} />{:else}<Icon icon={faShareNodes} size={17} />{/if}{copyStatus === 'copying' ? t('复制中…', 'Copying…') : copyStatus === 'copied' ? t('已复制邀请链接', 'Invitation link copied') : t('复制邀请链接', 'Copy invitation link')}</button>
   <p class={['mt-3 min-h-[1.8em] text-[12px] leading-[1.8]', copyStatus === 'manual' ? 'text-warning-text' : 'text-green']} role="status" aria-live="polite" aria-atomic="true">{copyStatus === 'copied' ? t('已复制，可直接粘贴分享给同伴。', 'Copied. Paste it to share with your teammates.') : copyStatus === 'manual' ? t('浏览器未允许自动复制。链接已选中，可长按或使用复制快捷键。', 'Your browser blocked automatic copying. The link is selected; long-press it or use your copy shortcut.') : ''}</p>
 </dialog>
-<dialog bind:this={notesDialog} class="max-md:px-5 max-md:py-6">
-  <div class="flex items-center justify-between gap-[15px]"><h2 class="text-[22px] max-md:text-[21px]">{t('主持人私密笔记', 'Private GM notes')}</h2><button class="-my-1.5 -mr-1.5 ml-0 flex border-0 bg-transparent p-2.5 text-muted" onclick={() => notesDialog.close()} aria-label={t('关闭笔记', 'Close notes')}><Icon icon={faXmark} size={21} /></button></div>
+{#if gm}<dialog bind:this={notesDialog} oncancel={cancelNotes} class="max-md:px-5 max-md:py-6">
+  <div class="flex items-center justify-between gap-[15px]"><h2 class="text-[22px] max-md:text-[21px]">{t('主持人私密笔记', 'Private GM notes')}</h2><button class="-my-1.5 -mr-1.5 ml-0 flex border-0 bg-transparent p-2.5 text-muted" onclick={cancelNotes} aria-label={t('关闭笔记', 'Close notes')}><Icon icon={faXmark} size={21} /></button></div>
   <p class="mt-[13px] text-[12px] text-muted">{t('只向主持人同步，也会包含在完整存档中。', 'Shared only with GMs and included in full saves.')}</p>
-  <form class="[&>.btn]:mt-[15px]" onsubmit={async (e) => { e.preventDefault(); if (await command('notes', { text: notesDraft }, notesRevision)) notesDialog.close(); }}><label for="gm-notes">{t('本场备注', 'Session notes')}</label><textarea class="max-md:text-[16px]" id="gm-notes" bind:value={notesDraft} maxlength="8000" rows="10"></textarea>{#if notesRevision !== game.revision}<p class="field-hint">{t('房间有更新；保存前请重新确认版本。', 'The room has updated; confirm the new version before saving.')}</p><button type="button" class="btn secondary" onclick={() => notesRevision = game.revision}>{t('已核对最新进度', 'Reviewed latest progress')}</button>{/if}<button class="btn primary" disabled={locked || notesRevision !== game.revision}>{t('保存笔记', 'Save notes')}</button></form>
-</dialog>
+  <form class="[&>.btn]:mt-[15px]" onsubmit={saveNotes}><label for="gm-notes">{t('本场备注', 'Session notes')}</label><textarea class="max-md:text-[16px]" id="gm-notes" bind:value={() => notesDraft, value => notesEditor.edit(value)} maxlength="8000" rows="10"></textarea>{#if notesRevision !== game.revision}<p class="field-hint">{t('房间有更新；保存前请重新确认版本。', 'The room has updated; confirm the new version before saving.')}</p><button type="button" class="btn secondary" onclick={() => notesEditor.review(game.revision)}>{t('已核对最新进度', 'Reviewed latest progress')}</button>{/if}<button class="btn primary" disabled={locked || notesRevision !== game.revision}>{t('保存笔记', 'Save notes')}</button></form>
+</dialog>{/if}

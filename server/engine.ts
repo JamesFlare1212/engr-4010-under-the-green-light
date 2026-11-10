@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { randomInt } from 'node:crypto';
 import { bi, phases, objectives, tiers, type Room, type Member, type Objective, type Tier, type Check, type Poll, type Text, type Settings } from '../shared/types';
 import { baseDC, phaseLabels, objectiveLabels, routes, evidence, negotiationOptions, tracks, isolationLabels, clinicLabels } from '../shared/content';
+import { canOpenKitVote, handoverComplete, isPendingPoll, maxPollHistory } from '../shared/state';
+import { maxActiveMembers } from '../shared/members';
 
 export class GameFault extends Error {
   constructor(public code: string, public messageText: Text, public status = 400) { super(messageText.en); }
@@ -27,7 +29,7 @@ export function newRoom(code: string, name: string, settings: Settings): Room {
   const hostId = crypto.randomUUID();
   return {
     schemaVersion: 1, scenarioVersion: '1.0.0', id: crypto.randomUUID(), code, revision: 0, createdAt: Date.now(), hostId, settings,
-    phase: 'lobby', members: [{ id: hostId, name, role: 'gm', character: 'coordinator', leads: 0, joinedAt: Date.now() }],
+    phase: 'lobby', members: [{ id: hostId, name, role: 'gm', character: 'coordinator', leads: 0, joinedAt: Date.now() }], archivedMembers: [],
     evidence: [], checks: [], polls: [], route: null, customRoute: { plan: '', costs: '', assumptions: '' }, emergencyKits: 2,
     report: { observations: '', uncertainty: '', owner: '', nextUpdate: '', statement: '', restrictions: '', backup: '', truthfulness: 'unreviewed' },
     override: null, overrideReason: '', reflections: {}, gmNotes: '', clock: { runningSince: null, elapsed: 0 }, logs: []
@@ -43,13 +45,15 @@ export function settle(check: Check, die: number) {
   return { die, dc, total, delta: total - dc, rawTier, tier: rawTier, kitSpent: false, rolledAt: Date.now() };
 }
 export function activeCheck(room: Room) { return room.checks.find(c => c.status !== 'resolved'); }
-export function unresolvedPoll(room: Room) { return room.polls.find(p => p.status === 'open' || (p.status === 'closed' && p.tied.length > 0 && !p.outcome)); }
+export function unresolvedPoll(room: Room) { return room.polls.find(isPendingPoll); }
 function playerIds(room: Room) { return room.members.filter(m => m.role === 'player').map(m => m.id); }
 function newPoll(room: Room, kind: Poll['kind'], question: Text, options: Poll['options'], checkId: string | null = null) {
   requireThat(!unresolvedPoll(room), '先结束当前投票或处理平票。', 'Close the current vote or resolve its tie first.');
   requireThat(playerIds(room).length, '至少需要一名玩家参与投票。', 'At least one player is needed to vote.');
   const poll: Poll = { id: crypto.randomUUID(), kind, question, options, eligible: playerIds(room), ballots: {}, status: 'open', outcome: null, tied: [], checkId, closeReason: '' };
   room.polls.push(poll);
+  // Like logs, retain bounded history; every accepted runtime state must remain importable.
+  if (room.polls.length > maxPollHistory) room.polls.splice(0, room.polls.length - maxPollHistory);
   return poll;
 }
 function applyPollOutcome(room: Room, poll: Poll) {
@@ -102,9 +106,10 @@ function resolveCheck(room: Room, check: Check, die: number) {
     if (member) member.leads++;
   }
   log(room, check.leadId!, bi(`${objectiveLabels[check.objective]['zh-CN']}：D20 ${die} + ${check.bonus}，DC ${check.result.dc}，差额 ${check.result.delta}。`, `${objectiveLabels[check.objective].en}: D20 ${die} + ${check.bonus}, DC ${check.result.dc}, delta ${check.result.delta}.`));
-  if (check.kind === 'execution' && check.result.delta < 0 && room.emergencyKits > 0) {
-    newPoll(room, 'kit', bi('使用 1 份应急物资，将本次结果提升一档？', 'Use 1 emergency kit to improve this result by one tier?'), [{ id: 'spend', label: bi('使用物资', 'Use a kit') }, { id: 'keep', label: bi('接受结果，保留物资', 'Accept the result; keep the kit') }], check.id);
-  }
+  if (canOpenKitVote(room, check)) openKitPoll(room, check);
+}
+function openKitPoll(room: Room, check: Check) {
+  return newPoll(room, 'kit', bi('使用 1 份应急物资，将本次结果提升一档？', 'Use 1 emergency kit to improve this result by one tier?'), [{ id: 'spend', label: bi('使用物资', 'Use a kit') }, { id: 'keep', label: bi('接受结果，保留物资', 'Accept the result; keep the kit') }], check.id);
 }
 export function execute(room: Room, member: Member, type: string, input: unknown) {
   const gm = () => requireThat(member.role === 'gm', '此操作需要主持人身份。', 'This action requires a GM.', 'forbidden', 403);
@@ -122,7 +127,7 @@ export function execute(room: Room, member: Member, type: string, input: unknown
       if (room.phase === 'investigation' && room.settings.mode === 'full') requireThat(objectives.every(o => room.checks.some(c => c.kind === 'preparation' && c.objective === o && c.result)), '完整版需要完成三项准备检定。', 'Complete all three preparation checks in full mode.');
       if (room.phase === 'route_choice') requireThat(room.route, '请先投票确定路线。', 'Choose a route through the vote first.');
       if (room.phase === 'execution') requireThat(objectives.every(o => room.checks.some(c => c.kind === 'execution' && c.objective === o && c.result)), '请先结算三个救援目标。', 'Resolve all three rescue objectives first.');
-      if (room.phase === 'ending') requireThat(room.report.statement.trim() && room.report.owner.trim() && room.report.nextUpdate.trim(), '先保存通报原话、下一步负责人及更新时间，再进入复盘。', 'Save the actual statement, next-action owner and update time before the debrief.');
+      if (room.phase === 'ending') requireThat(handoverComplete(room.report), '先保存通报原话、下一步负责人及更新时间，再进入复盘。', 'Save the actual statement, next-action owner and update time before the debrief.');
       const index = phases.indexOf(room.phase);
       requireThat(index < phases.length - 1, '已经到达复盘阶段。', 'You are already in the debrief.');
       room.phase = phases[index + 1];
@@ -153,7 +158,10 @@ export function execute(room: Room, member: Member, type: string, input: unknown
       target.role = data.role;
       if (data.role !== 'player') {
         const check = activeCheck(room);
-        if (check) { check.eligible = check.eligible.filter(i => i !== target.id); delete check.responses[target.id]; }
+        if (check) {
+          check.eligible = check.eligible.filter(i => i !== target.id); delete check.responses[target.id];
+          if (check.status === 'recruiting' && check.eligible.every(i => i in check.responses) && Object.values(check.responses).some(Boolean)) selectLead(room, check);
+        }
         for (const poll of room.polls.filter(p => p.status === 'open')) { poll.eligible = poll.eligible.filter(i => i !== target.id); delete poll.ballots[target.id]; }
       }
       log(room, member.id, bi(`调整了 ${target.name} 的身份。`, `Changed ${target.name}’s role.`)); break;
@@ -223,6 +231,8 @@ export function execute(room: Room, member: Member, type: string, input: unknown
     case 'recruit_again': {
       gm(); const data = parse(z.object({ checkId: id }), payload);
       const check = room.checks.find(c => c.id === data.checkId); requireThat(check && !check.result, '已结算的行动不能重新申请。', 'A resolved check cannot recruit again.');
+      // A fresh ID prevents delayed responses / physical rolls from a previous recruitment (ABA).
+      check.id = crypto.randomUUID();
       check.status = 'recruiting'; check.eligible = playerIds(room); check.responses = {}; check.leadId = null; check.supportId = null;
       log(room, member.id, bi('重新开放本次行动申请，原先主导不再有掷骰权限。', 'Reopened recruitment. The previous lead can no longer roll.')); break;
     }
@@ -236,8 +246,8 @@ export function execute(room: Room, member: Member, type: string, input: unknown
     case 'kit_vote': {
       gm(); const data = parse(z.object({ checkId: id }), payload);
       const check = room.checks.at(-1);
-      requireThat(room.phase === 'execution' && check?.id === data.checkId && check.kind === 'execution' && check.result && check.result.delta < 0 && !check.result.kitSpent && room.emergencyKits > 0, '此行动没有可用的补救机会。', 'This action is not eligible for an emergency kit.');
-      newPoll(room, 'kit', bi('使用 1 份应急物资，将本次结果提升一档？', 'Use 1 emergency kit to improve this result by one tier?'), [{ id: 'spend', label: bi('使用物资', 'Use a kit') }, { id: 'keep', label: bi('接受结果，保留物资', 'Accept the result; keep the kit') }], check.id); break;
+      requireThat(check?.id === data.checkId && canOpenKitVote(room, check), '此行动没有可用的补救机会。', 'This action is not eligible for an emergency kit.');
+      openKitPoll(room, check); break;
     }
     case 'correct_die': {
       gm(); const data = parse(z.object({ checkId: id, die: z.number().int().min(1).max(20), reason: z.string().trim().min(1).max(500) }), payload);
@@ -246,7 +256,9 @@ export function execute(room: Room, member: Member, type: string, input: unknown
       if (check.result.kitSpent) room.emergencyKits++;
       const previous = check.result.die;
       check.result = settle(check, data.die); check.correctionReason = data.reason;
-      log(room, member.id, bi(`更正骰点 ${previous} → ${data.die}；退回本次物资并重算。原因：${data.reason}`, `Corrected die ${previous} → ${data.die}; refunded this check’s kit and recalculated. Reason: ${data.reason}`)); break;
+      log(room, member.id, bi(`更正骰点 ${previous} → ${data.die}；退回本次物资并重算。原因：${data.reason}`, `Corrected die ${previous} → ${data.die}; refunded this check’s kit and recalculated. Reason: ${data.reason}`));
+      if (canOpenKitVote(room, check)) openKitPoll(room, check);
+      break;
     }
     case 'narrative': {
       gm(); const data = parse(z.object({ checkId: id, narrative: z.string().trim().min(1).max(3000) }), payload);
@@ -290,16 +302,18 @@ export function execute(room: Room, member: Member, type: string, input: unknown
   }
 }
 
-const memberSchema = z.object({ id, name: nameSchema, role: z.enum(['gm', 'player', 'spectator']), character: z.string().max(40), leads: z.number().int().nonnegative(), joinedAt: z.number() });
+const memberSchema = z.object({ id, name: nameSchema, role: z.enum(['gm', 'player', 'spectator']), character: z.string().max(40), leads: z.number().int().nonnegative(), joinedAt: z.number(), recoverySeat: z.literal(true).optional() });
 const resultSchema = z.object({ die: z.number().int().min(1).max(20), total: z.number().int(), dc: z.number().int(), delta: z.number().int(), rawTier: z.enum(tiers), tier: z.enum(tiers), kitSpent: z.boolean(), rolledAt: z.number() });
 const textSchema = z.object({ 'zh-CN': text, en: text });
 export const archiveSchema = z.object({
-  format: z.literal('green-light-save'), version: z.literal(1),
+  format: z.literal('green-light-save'), version: z.union([z.literal(1), z.literal(2)]),
   room: z.object({
     schemaVersion: z.literal(1), scenarioVersion: z.literal('1.0.0'), id, code: z.string().regex(/^\d{4}$/), revision: z.number().int().nonnegative(), createdAt: z.number(),
-    hostId: id, settings: settingsSchema, phase: z.enum(phases), members: z.array(memberSchema).min(1).max(40), evidence: z.array(z.string()).max(3),
-    checks: z.array(z.object({ id, kind: z.enum(['preparation', 'execution']), objective: objectiveSchema, action: text, backup: text, bonus: z.number().int().min(0).max(3), bonusReason: z.string().max(500), creative: z.number().int().min(0).max(2), preparation: z.number().int().min(0).max(2), eligible: z.array(id).max(40), responses: z.record(z.string(), z.boolean()), leadId: id.nullable(), supportId: id.nullable(), status: z.enum(['recruiting', 'selected', 'resolved']), result: resultSchema.nullable(), narrative: text, correctionReason: z.string().max(500) })).max(6),
-    polls: z.array(z.object({ id, kind: z.enum(['route', 'kit', 'decision']), question: textSchema, options: z.array(z.object({ id, label: textSchema })).max(10), eligible: z.array(id).max(40), ballots: z.record(z.string(), z.string()), status: z.enum(['open', 'closed']), outcome: id.nullable(), tied: z.array(id).max(10), checkId: id.nullable(), closeReason: z.string().max(500) })).max(300),
+    hostId: id, settings: settingsSchema, phase: z.enum(phases), members: z.array(memberSchema).min(1).max(maxActiveMembers),
+    // Absent in v1 saves and pre-migration SQLite JSON. History is bounded by the archive byte budget.
+    archivedMembers: z.array(memberSchema.omit({ role: true, recoverySeat: true })).default([]), recovery: z.object({ ownerId: id, at: z.number() }).optional(), evidence: z.array(z.string()).max(3),
+    checks: z.array(z.object({ id, kind: z.enum(['preparation', 'execution']), objective: objectiveSchema, action: text, backup: text, bonus: z.number().int().min(0).max(3), bonusReason: z.string().max(500), creative: z.number().int().min(0).max(2), preparation: z.number().int().min(0).max(2), eligible: z.array(id).max(maxActiveMembers), responses: z.record(z.string(), z.boolean()), leadId: id.nullable(), supportId: id.nullable(), status: z.enum(['recruiting', 'selected', 'resolved']), result: resultSchema.nullable(), narrative: text, correctionReason: z.string().max(500) })).max(6),
+    polls: z.array(z.object({ id, kind: z.enum(['route', 'kit', 'decision']), question: textSchema, options: z.array(z.object({ id, label: textSchema })).max(10), eligible: z.array(id).max(maxActiveMembers), ballots: z.record(z.string(), z.string()), status: z.enum(['open', 'closed']), outcome: id.nullable(), tied: z.array(id).max(10), checkId: id.nullable(), closeReason: z.string().max(500) })).max(maxPollHistory),
     route: z.enum(['high_line', 'quiet_water', 'borrowed_channel', 'custom']).nullable(), customRoute: z.object({ plan: text, costs: text, assumptions: text }), emergencyKits: z.number().int().min(0).max(2),
     report: z.object({ observations: text, uncertainty: text, owner: z.string().max(200), nextUpdate: z.string().max(200), statement: text, restrictions: text, backup: text, truthfulness: z.enum(['unreviewed', 'accurate', 'incomplete', 'misleading']) }),
     override: z.object({ evacuated: z.number().int().min(0).max(12), waiting: z.number().int().min(0).max(12), observation: z.number().int().min(0).max(12), isolation: z.enum(['pending', 'verified', 'temporary-recheck-required', 'unverified-cordon', 'unverified-damage']), clinic: z.enum(['pending', 'complete', 'follow-up-required', 'urgent-follow-up-required']) }).nullable(), overrideReason: z.string().max(1000),
@@ -309,16 +323,32 @@ export const archiveSchema = z.object({
 });
 export function validateArchive(data: unknown): Room {
   const result = archiveSchema.safeParse(data);
-  requireThat(result.success, '存档版本不受支持或内容损坏；需要 green-light-save v1 / 剧本 1.0.0。', 'Unsupported or damaged save. Expected green-light-save v1 / scenario 1.0.0.');
+  requireThat(result.success, '存档版本不受支持或内容损坏；需要 green-light-save v1/v2 / 剧本 1.0.0。', 'Unsupported or damaged save. Expected green-light-save v1/v2 / scenario 1.0.0.');
   const room: Room = result.data.room;
-  requireThat(new Set(room.members.map(m => m.id)).size === room.members.length && room.members.some(m => m.id === room.hostId && m.role === 'gm'), '存档成员身份不完整。', 'The save has invalid member identities.');
+  const identities = new Set([...room.members, ...room.archivedMembers].map(m => m.id));
+  requireThat(identities.size === room.members.length + room.archivedMembers.length && room.members.some(m => m.id === room.hostId && m.role === 'gm'), '存档成员身份不完整。', 'The save has invalid member identities.');
+  requireThat(room.members.every(member => !member.recoverySeat || (member.id === room.hostId && member.role === 'gm')) && (!room.recovery || room.recovery.ownerId === room.hostId), '存档恢复席位记录无效。', 'The save has an invalid recovery seat.');
+  requireThat(Object.keys(room.reflections).every(i => identities.has(i)), '存档反思缺少对应的历史身份。', 'The save has reflections without matching identities.');
   requireThat(room.members.filter(m => m.role === 'gm').length <= room.settings.gmCount, '存档主持人数超过配置。', 'The save has more GMs than configured seats.');
   requireThat(room.emergencyKits === 2 - room.checks.filter(c => c.result?.kitSpent).length, '存档物资与行动记录不一致。', 'Save resources do not match its action history.');
   requireThat(new Set(room.checks.map(c => `${c.kind}:${c.objective}`)).size === room.checks.length && room.checks.filter(c => c.status !== 'resolved').length <= 1, '存档存在重复或冲突检定。', 'The save contains duplicate or conflicting checks.');
+  const phaseIndex = phases.indexOf(room.phase);
+  const completed = (kind: Check['kind']) => objectives.every(objective => room.checks.some(check => check.kind === kind && check.objective === objective && check.status === 'resolved'));
+  requireThat(phaseIndex < phases.indexOf('investigation') || (room.evidence.length === evidence.length && evidence.every(item => room.evidence.includes(item.id))), '存档缺少已公开的关键证据。', 'The save is missing revealed essential evidence.');
+  requireThat(room.settings.mode !== 'full' || phaseIndex < phases.indexOf('negotiation') || completed('preparation'), '存档阶段与准备进度不一致。', 'The save stage does not match preparation progress.');
+  requireThat(phaseIndex < phases.indexOf('execution') || (room.route && (room.route !== 'custom' || Object.values(room.customRoute).every(value => value.trim()))), '存档执行阶段缺少已确认的路线。', 'The save has no confirmed route for execution.');
+  requireThat(phaseIndex < phases.indexOf('ending') || completed('execution'), '存档阶段与救援进度不一致。', 'The save stage does not match rescue progress.');
+  requireThat(room.polls.filter(isPendingPoll).length <= 1 && !(activeCheck(room) && unresolvedPoll(room)), '存档包含冲突的未完成操作。', 'The save contains conflicting pending operations.');
   for (const check of room.checks) {
-    requireThat(check.eligible.every(i => room.members.some(m => m.id === i)) && (!check.leadId || check.eligible.includes(check.leadId)) && (!check.supportId || check.eligible.includes(check.supportId)), '存档行动参与者不一致。', 'The save has inconsistent check participants.');
+    requireThat(phaseIndex >= phases.indexOf(check.kind === 'preparation' ? 'investigation' : 'execution') && (check.status === 'resolved' || room.phase === (check.kind === 'preparation' ? 'investigation' : 'execution')), '存档检定与当前阶段不一致。', 'A save check does not belong to this stage.');
+    requireThat(new Set(check.eligible).size === check.eligible.length && Object.keys(check.responses).every(i => check.eligible.includes(i)) && (check.status === 'recruiting' ? !check.leadId : Boolean(check.leadId && check.responses[check.leadId] === true)) && (!check.leadId || check.leadId !== check.supportId), '存档招募与主导记录不一致。', 'The save has inconsistent recruitment or lead records.');
+    requireThat(check.eligible.every(i => identities.has(i)) && (!check.leadId || check.eligible.includes(check.leadId)) && (!check.supportId || check.eligible.includes(check.supportId)), '存档行动参与者不一致。', 'The save has inconsistent check participants.');
     requireThat(check.kind !== 'preparation' || (room.settings.mode === 'full' && check.preparation === 0 && check.creative === 0), '存档准备规则不一致。', 'The save has inconsistent preparation rules.');
     requireThat((check.status === 'resolved') === Boolean(check.result), '存档检定状态不一致。', 'Save check status is inconsistent.');
+    if (check.kind === 'execution') {
+      const prepared = room.checks.some(c => c.kind === 'preparation' && c.objective === check.objective && c.result && ['success', 'boon'].includes(c.result.tier));
+      requireThat(check.preparation === (room.settings.mode === 'full' && prepared ? 2 : 0), '存档执行准备优势缺少对应来源。', 'The save execution preparation bonus has no matching source.');
+    }
     if (check.result) {
       const expected = settle(check, check.result.die);
       const tier = check.result.kitSpent ? tiers[Math.min(3, tiers.indexOf(expected.rawTier) + 1)] : expected.rawTier;
@@ -326,7 +356,7 @@ export function validateArchive(data: unknown): Room {
     }
   }
   requireThat(new Set(room.polls.map(p => p.id)).size === room.polls.length && new Set(room.checks.map(c => c.id)).size === room.checks.length, '存档存在重复操作 ID。', 'The save contains duplicate operation IDs.');
-  for (const poll of room.polls) requireThat(poll.options.length >= 2 && poll.eligible.every(i => room.members.some(m => m.id === i)) && Object.entries(poll.ballots).every(([i, choice]) => poll.eligible.includes(i) && poll.options.some(o => o.id === choice)) && (!poll.outcome || poll.options.some(o => o.id === poll.outcome)), '存档投票记录无效。', 'The save has an invalid voting record.');
+  for (const poll of room.polls) requireThat(poll.options.length >= 2 && poll.eligible.every(i => identities.has(i)) && Object.entries(poll.ballots).every(([i, choice]) => poll.eligible.includes(i) && poll.options.some(o => o.id === choice)) && (!poll.outcome || poll.options.some(o => o.id === poll.outcome)), '存档投票记录无效。', 'The save has an invalid voting record.');
   if (room.override) requireThat(room.override.evacuated + room.override.waiting === 12 && room.override.observation <= room.override.evacuated, '存档人数记录不一致。', 'The save has inconsistent headcounts.');
   return room;
 }

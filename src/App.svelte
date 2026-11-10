@@ -3,21 +3,26 @@
   import Icon from './components/Icon.svelte';
   import { faCircleExclamation, faLanguage, faXmark } from '@fortawesome/free-solid-svg-icons';
   import { locale, syncBrowserLocale } from './lib/i18n';
-  import { room, session, notice, resume, disconnect } from './lib/client';
+  import { room, session, notice, resume, disconnect, clearSession } from './lib/client';
+  import { confirmDraftNavigation } from './lib/room-drafts';
   import Brand from './components/Brand.svelte';
   import Home from './components/Home.svelte';
   import Room from './components/Room.svelte';
   let joinCode = $state(/^\/room\/(\d{4})/.exec(location.pathname)?.[1] ?? '');
   onMount(() => {
     const stopLocaleSync = syncBrowserLocale();
-    const route = () => { const code = /^\/room\/(\d{4})/.exec(location.pathname)?.[1]; if (code) { joinCode = code; resume(code); } else { disconnect(); room.set(null); session.set(null); joinCode = ''; } };
+    const route = () => {
+      const code = /^\/room\/(\d{4})/.exec(location.pathname)?.[1];
+      if (code !== $session?.code && !confirmDraftNavigation()) { history.replaceState({}, '', $session ? `/room/${$session.code}` : '/'); return; }
+      if (code) { joinCode = code; resume(code); } else { clearSession(); joinCode = ''; }
+    };
     route(); window.addEventListener('popstate', route);
     return () => { stopLocaleSync(); window.removeEventListener('popstate', route); disconnect(); };
   });
 </script>
 <a href="#main" class="fixed -top-20 left-3 z-100 bg-surface p-3.5 focus:top-3">{$locale === 'zh-CN' ? '跳到主要内容' : 'Skip to content'}</a>
 {#if $room}
-  <Room game={$room} />
+  {#key `${$room.id}:${$room.me}`}<Room game={$room} />{/key}
 {:else}
   <div class="flex min-h-svh flex-col bg-landing text-[#ecf2e9]">
     <header class="flex h-[100px] items-center justify-between gap-5 border-b border-[#ffffff0e] px-[clamp(24px,5.5vw,96px)] max-lg:h-[85px] max-lg:px-7 max-md:h-[76px] max-md:px-[22px]">

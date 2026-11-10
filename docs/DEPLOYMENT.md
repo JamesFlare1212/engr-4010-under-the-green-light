@@ -57,6 +57,8 @@ map $http_upgrade $connection_upgrade {
 server {
     listen 443 ssl;
     server_name game.example.com;
+    # 存档文件 32 MiB + 导入 JSON 包裹；其他 POST 仍由应用限制为 1 MiB。
+    client_max_body_size 33m;
     # 配置自己的 TLS 证书
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -69,13 +71,13 @@ server {
 }
 ```
 
-TLS 在代理终止时，设置 `.env` 的 `PUBLIC_ORIGIN` 为公开 HTTPS 地址。浏览器自动使用 wss。
+TLS 在代理终止时，设置 `.env` 的 `PUBLIC_ORIGIN` 为公开 HTTPS 地址。浏览器自动使用 wss。其他代理/CDN 也必须允许至少 32 MiB + 1 KiB 的导入请求，不能沿用 1 MiB 上传默认值。浏览器导入/导出使用 120 秒传输超时，普通请求仍为 12 秒；这不是慢网络或高并发性能保证。
 
 ## 数据、备份与升级
 
 SQLite 卷为 `green-light-data`，实际名称通常带 Compose 项目前缀。常规 `docker compose down` 保留卷；删除卷会删除场次和身份凭证。
 
-单场交接可在应用导出 JSON，含 GM 笔记，不含登录令牌。恢复为新房间后，历史成员重新加入，房主将旧身份设为观察者。若需原样恢复所有场次与原浏览器身份，备份整个 SQLite 数据目录：
+单场交接可在应用导出 v2 JSON，含 GM 笔记，不含登录令牌；导入兼容 v1/v2。恢复建立新房主，历史实际成员自动归档、不占 40 个当前席位，新团队重新加入并由新房主分配 GM，无需手动降级旧身份。存档与最坏恢复版本共用 32 MiB UTF-8 字节预算；超额写入原子拒绝，不静默删除历史文本。若需原样恢复所有场次与原浏览器身份，备份整个 SQLite 数据目录：
 
 ```bash
 mkdir -p backups
@@ -95,10 +97,10 @@ docker compose up -d app
 
 暂停自动更新可执行 `docker compose stop watchtower`，恢复用 `docker compose start watchtower`。回滚时先暂停 Watchtower，将 `.env` 的 `APP_IMAGE` 改为已成功发布的 `ghcr.io/jamesflare1212/engr-4010-under-the-green-light:sha-<完整提交哈希>`，再执行上述拉取和更新命令。固定标签后，即使恢复 Watchtower 也不会继续跟踪 `latest`；重新设为 `:latest` 并运行 `docker compose up -d` 才恢复正常跟随。构建缓存和 SHA 标签均不代替数据库备份。
 
-数据库 `user_version=1`，拒绝写入高于应用支持版本的数据库。后续 schema 更新需加入显式迁移，发布前备份；回滚应用不能自动降级数据库，必要时恢复兼容版本的备份。
+数据库当前 `user_version=2`，启动时兼容升级旧 v1；缺少历史身份字段的旧 JSON 在读取时补齐，已有令牌保留。Room 协议 `schemaVersion=1` 与数据库版本、存档 v2 是不同层次。数据库版本提升也阻止只理解旧身份模型的程序降级写入；回滚旧镜像必须同时恢复对应的升级前数据库备份，不能仅把新库的 user_version 改小。
 
 ## 运行约束与验证边界
 
-单实例课堂 / 小组应用，每房间最多 40 名成员，建议 4–8 名玩家。四位码用于邀请，权限由会话令牌决定。浏览器本地存储丢失后不能仅凭姓名找回 GM 身份，可用此前导出的存档创建新房间。无需外部账号、数据库或服务密钥。
+单实例课堂 / 小组应用，每房间最多 40 名当前成员，历史身份另计并受存档总字节预算限制，建议 4–8 名玩家。四位码用于邀请，权限由会话令牌决定。浏览器本地存储丢失后不能仅凭姓名找回 GM 身份，可用此前导出的存档创建新房间。无需外部账号、数据库或服务密钥。
 
 本次 CI 修复已验证 amd64 Docker 构建阶段及 ARM64/QEMU 样式单测，具体范围见 [验证记录](QA.md)。尚未执行修复版完整双架构镜像构建、Compose 启动或 Watchtower 更新演练。首次上线应确认 Actions 成功、应用容器 healthy，再推送一次更新确认 Watchtower 日志与房间恢复。
